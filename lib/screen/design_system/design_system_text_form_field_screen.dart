@@ -21,7 +21,8 @@ class DesignSystemTextFormFieldScreen extends StatelessWidget {
               DefaultTextFormField(
                 label: 'Username',
                 controller: _textController,
-                validator: (value) {
+                title: '라이프시맨틱스',
+                formFieldValidator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a username';
                   }
