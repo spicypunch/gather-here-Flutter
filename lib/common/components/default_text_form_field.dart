@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:gather_here/common/const/colors.dart';
 
+typedef FormFieldValidator = String? Function(String?);
+typedef OnChanged = void Function(String);
+
 // GH 기본 TextField
 class DefaultTextFormField extends StatefulWidget {
   final double height;
@@ -10,10 +13,10 @@ class DefaultTextFormField extends StatefulWidget {
   final Color filledColor; // textField 배경 색
   final double radius; // textField 곡률
   final TextEditingController controller; // 입력된 텍스트를 제어 및 관리
-  final String? Function(String?)? formFieldValidator; // 텍스트 입력 검증
-  final TextInputType typeDef; // 키보드 입력 타입
+  final FormFieldValidator? formFieldValidator; // 텍스트 입력 검증
+  final TextInputType keyboardType; // 키보드 입력 타입
   final bool obscureText; // 입력된 텍스트 가리기, 비밀번호 입력 시 true
-  final void Function(String)? onChanged; // 입력된 텍스트가 수정될  호출되는 콜백
+  final OnChanged? onChanged; // 입력된 텍스트가 수정될  호출되는 콜백
 
   const DefaultTextFormField({
     required this.label,
@@ -24,7 +27,7 @@ class DefaultTextFormField extends StatefulWidget {
     this.filledColor = AppColor.grey4,
     this.radius = 12,
     this.formFieldValidator,
-    this.typeDef = TextInputType.text,
+    this.keyboardType = TextInputType.text,
     this.obscureText = false,
     this.onChanged,
     super.key,
@@ -64,7 +67,7 @@ class _DefaultTextFormFieldState extends State<DefaultTextFormField> {
             controller: widget.controller,
             validator: widget.formFieldValidator,
             cursorColor: AppColor.black,
-            keyboardType: widget.typeDef,
+            keyboardType: widget.keyboardType,
             obscureText: widget.obscureText,
             onChanged: widget.onChanged,
             style: const TextStyle(fontSize: 16, color: AppColor.black),
