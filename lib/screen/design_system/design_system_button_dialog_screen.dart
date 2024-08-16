@@ -10,7 +10,7 @@ class DesignSystemButtonDialogScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultLayout(
-      title: 'Dialog',
+      title: 'ButtonDialog',
       child: SafeArea(
         child: DefaultButtonDialog(
           date: '2024-08-03(토)',

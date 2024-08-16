@@ -10,7 +10,7 @@ class DesignSystemAlertDialogScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultLayout(
-      title: 'Dialog',
+      title: 'AlertDialog',
       child: SafeArea(
         child: DefaultAlertDialog(
           title: '회원가입 실패',

@@ -10,7 +10,7 @@ class DesignSystemTextFieldDialogScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultLayout(
-      title: 'Dialog',
+      title: 'TextFieldDialog',
       child: SafeArea(
         child: DefaultTextFieldDialog(
           title: '비밀번호 변경',
