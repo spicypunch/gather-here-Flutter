@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gather_here/common/components/default_button.dart';
 
 import '../../common/components/default_text_form_field.dart';
 
@@ -33,8 +34,9 @@ class DesignSystemTextFormFieldScreen extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
+              DefaultButton(
+                title: '확인',
+                onTap: () {
                   // Form의 상태를 검증. 모든 TextFormField의 validator 함수가 호출
                   if (_formKey.currentState!.validate()) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -42,7 +44,6 @@ class DesignSystemTextFormFieldScreen extends StatelessWidget {
                     );
                   }
                 },
-                child: const Text('Submit'),
               ),
             ],
           ),

@@ -77,20 +77,23 @@ class _DefaultTextFormFieldState extends State<DefaultTextFormField> {
               filled: true,
               fillColor: widget.filledColor,
               border: OutlineInputBorder(
-                  borderSide: const BorderSide(
-                    color: AppColor.grey2,
-                  ),
-                  borderRadius: BorderRadius.circular(widget.radius)),
+                borderSide: const BorderSide(
+                  color: AppColor.grey2,
+                ),
+                borderRadius: BorderRadius.circular(widget.radius),
+              ),
               enabledBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(
-                    color: AppColor.grey2,
-                  ),
-                  borderRadius: BorderRadius.circular(widget.radius)),
+                borderSide: const BorderSide(
+                  color: AppColor.grey2,
+                ),
+                borderRadius: BorderRadius.circular(widget.radius),
+              ),
               focusedBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(
-                    color: AppColor.black,
-                  ),
-                  borderRadius: BorderRadius.circular(widget.radius)),
+                borderSide: const BorderSide(
+                  color: AppColor.black,
+                ),
+                borderRadius: BorderRadius.circular(widget.radius),
+              ),
             ),
           ),
         ],

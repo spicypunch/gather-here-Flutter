@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 class DesignSystemScreen extends StatelessWidget {
   final list = [
     'Button',
-    'Dialog',
+    'AlertDialog',
+    'ButtonDialog',
+    'TextFieldDialog',
     'BottomSheet',
     'TextField'
   ];
