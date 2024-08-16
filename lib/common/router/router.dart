@@ -21,16 +21,16 @@ final router = GoRouter(
 final dsRouter = GoRouter(
   routes: [
     GoRoute(
-      path: '/',
-      name: 'home',
-      builder: (context, state) => DesignSystemScreen(),
-      routes: [
-        GoRoute(path: 'button', name: 'Button', builder: (_, state) => DesignSystemButtonScreen()),
-        GoRoute(path: 'alertDialog', name: 'AlertDialog', builder: (_, state) => DesignSystemAlertDialogScreen()),
-        GoRoute(path: 'buttonDialog', name: 'ButtonDialog', builder: (_, state) => DesignSystemButtonDialogScreen()),
-        GoRoute(path: 'textFieldDialog', name: 'TextFieldDialog', builder: (_, state) => DesignSystemTextFieldDialogScreen()),
-        GoRoute(path: 'textField', name: 'TextField', builder: (_, state) => DesignSystemTextFormFieldScreen())
-      ]
+        path: '/',
+        name: 'home',
+        builder: (context, state) => DesignSystemScreen(),
+        routes: [
+          GoRoute(path: 'button', name: 'Button', builder: (_, state) => DesignSystemButtonScreen()),
+          GoRoute(path: 'alertDialog', name: 'AlertDialog', builder: (_, state) => DesignSystemAlertDialogScreen()),
+          GoRoute(path: 'buttonDialog', name: 'ButtonDialog', builder: (_, state) => DesignSystemButtonDialogScreen()),
+          GoRoute(path: 'textFieldDialog', name: 'TextFieldDialog', builder: (_, state) => DesignSystemTextFieldDialogScreen()),
+          GoRoute(path: 'textField', name: 'TextField', builder: (_, state) => DesignSystemTextFormFieldScreen())
+        ]
     ),
   ],
 );
