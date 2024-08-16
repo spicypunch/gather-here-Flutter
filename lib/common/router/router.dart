@@ -1,5 +1,6 @@
 import 'package:gather_here/screen/design_system/design_system_button_screen.dart';
 import 'package:gather_here/screen/design_system/design_system_screen.dart';
+import 'package:gather_here/screen/design_system/design_system_text_form_field_screen.dart';
 import 'package:gather_here/screen/home/home_screen.dart';
 import 'package:go_router/go_router.dart';
 
@@ -20,7 +21,8 @@ final dsRouter = GoRouter(
       name: 'home',
       builder: (context, state) => DesignSystemScreen(),
       routes: [
-        GoRoute(path: 'button', name: 'Button', builder: (_, state) => DesignSystemButtonScreen())
+        GoRoute(path: 'button', name: 'Button', builder: (_, state) => DesignSystemButtonScreen()),
+        GoRoute(path: 'textField', name: 'TextField', builder: (_, state) => DesignSystemTextFormFieldScreen())
       ]
     ),
   ],
