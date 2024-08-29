@@ -122,7 +122,7 @@ class MyPageProvider extends StateNotifier<AsyncValue<MemberInfoModel>> {
   Future<bool> deleteMember() async {
     try {
       await authRepository.deleteMember();
-      await storage.deleteAll()
+      await storage.deleteAll();
       return true;
     } catch (e) {
       debugPrint('deleteMember Err: $e');
