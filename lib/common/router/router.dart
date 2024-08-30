@@ -1,4 +1,5 @@
 import 'package:gather_here/screen/my_page/my_page_screen.dart';
+import 'package:gather_here/screen/share/share_screen.dart';
 import 'package:gather_here/screen/sign_up/sign_up_screen.dart';
 import 'package:gather_here/screen/design_system/design_system_button_screen.dart';
 import 'package:gather_here/screen/design_system/design_system_screen.dart';
@@ -33,6 +34,13 @@ final router = GoRouter(
       path: '/home',
       name: HomeScreen.name,
       builder: (context, state) => HomeScreen(),
+      routes: [
+        GoRoute(
+          path: 'share',
+          name: ShareScreen.name,
+          builder: (context, state) => ShareScreen(),
+        ),
+      ]
     ),
     GoRoute(
       path: '/my_page',

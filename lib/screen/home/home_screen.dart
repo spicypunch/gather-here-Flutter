@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gather_here/common/components/default_text_form_field.dart';
 import 'package:gather_here/common/const/colors.dart';
+import 'package:gather_here/screen/share/share_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:easy_debounce/easy_debounce.dart';
@@ -54,6 +54,7 @@ class HomeScreen extends ConsumerWidget {
                                       .tapInviteButton();
                                   if (result) {
                                     context.pop();
+                                    context.goNamed(ShareScreen.name);
                                   } else {
                                     print('Error: 방입장 실패');
                                   }
@@ -285,6 +286,9 @@ class _LocationBottomSheetState extends ConsumerState<LocationBottomSheet> {
                                         onTap: () async {
                                           final result = await ref.read(homeProvider.notifier).tapStartSharingButton();
                                           print(result);
+                                          if(result) {
+                                            context.goNamed(ShareScreen.name);
+                                          }
                                         },
                                       )
                                     ],
