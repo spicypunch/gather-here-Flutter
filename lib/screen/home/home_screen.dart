@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gather_here/common/components/default_text_form_field.dart';
 import 'package:gather_here/common/const/colors.dart';
+import 'package:gather_here/screen/my_page/my_page_screen.dart';
 import 'package:gather_here/screen/share/share_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -117,6 +118,7 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
         IconButton(
           onPressed: () {
             // TODO: 프로필 화면으로 이동하기
+            context.goNamed(MyPageScreen.name);
           },
           icon: Icon(Icons.circle),
         )
