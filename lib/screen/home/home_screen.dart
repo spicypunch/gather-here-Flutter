@@ -146,7 +146,7 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
             ],
             onChanged: (text) => EasyDebounce.debounce(
               'query',
-`              Duration(seconds: 1),
+              Duration(seconds: 1),
                   () async {
                 ref.read(homeProvider.notifier).queryChanged(value: text);
               },
