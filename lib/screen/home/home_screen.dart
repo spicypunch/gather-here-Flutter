@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gather_here/common/components/default_text_form_field.dart';
 import 'package:gather_here/common/const/colors.dart';
+import 'package:gather_here/common/location/location_manager.dart';
 import 'package:gather_here/common/storage/storage.dart';
 import 'package:gather_here/screen/my_page/my_page_screen.dart';
 import 'package:gather_here/screen/share/share_screen.dart';
@@ -158,8 +159,8 @@ class _MapState extends ConsumerState<_Map> {
   final Completer<GoogleMapController> _controller =
   Completer<GoogleMapController>();
 
-  static const CameraPosition _kGooglePlex = CameraPosition(
-    target: LatLng(37.42796133580664, -122.085749655962),
+  static const CameraPosition _defaultPosition = CameraPosition(
+    target: LatLng(37.5642135, -127.0016985),
     zoom: 14.4746,
   );
 
@@ -167,7 +168,33 @@ class _MapState extends ConsumerState<_Map> {
   void initState() {
     super.initState();
 
-    ref.read(homeProvider.notifier).getCurrentLocation();
+    print('what is wrong');
+    // 현재 위치 가져온 후, 그 위치로 이동
+    ref.read(homeProvider.notifier).getCurrentLocation(() async {
+      final vm = ref.read(homeProvider);
+      print('현재위치 ${vm.lat} ${vm.lon}');
+
+      if (vm.lat != null && vm.lon != null) {
+        moveToTargetPosition(lat: vm.lat!, lon: vm.lon!);
+      }
+    });
+
+    final stream = LocationManager.observePosition().listen((position) {
+      print(
+        position == null
+            ? 'Unknown'
+            : 'location ${position.latitude.toString()}, ${position.longitude.toString()}',
+      );
+    });
+  }
+
+  // 특정 위치로 카메라 포지션 이동
+  void moveToTargetPosition({required double lat, required double lon}) async {
+    final GoogleMapController controller = await _controller.future;
+    final targetPosition =
+        CameraPosition(target: LatLng(lat, lon), zoom: 14.4746);
+    await controller
+        .animateCamera(CameraUpdate.newCameraPosition(targetPosition));
   }
 
   @override
@@ -175,9 +202,9 @@ class _MapState extends ConsumerState<_Map> {
     final vm = ref.watch(homeProvider);
 
     return GoogleMap(
-      initialCameraPosition: _kGooglePlex,
+      initialCameraPosition: _defaultPosition,
       myLocationEnabled: true,
-      myLocationButtonEnabled: true,
+      myLocationButtonEnabled: false,
       markers: vm.results
           .map(
             (result) =>
@@ -186,7 +213,6 @@ class _MapState extends ConsumerState<_Map> {
               position: LatLng(double.parse(result.y), double.parse(result.x)),
               onTap: () {
                 ref.read(homeProvider.notifier).tapLocationMarker(result);
-                print(result.toString());
               },
             ),
       )
@@ -208,7 +234,6 @@ class LocationBottomSheet extends ConsumerStatefulWidget {
 }
 
 class _LocationBottomSheetState extends ConsumerState<LocationBottomSheet> {
-  double _sheetPosition = 0.05; // bottom sheet 시작 높이
   final double _maxPosition = 0.3;
   final double _minPosition = 0.05;
   final double _dragSensitivity = 600;
@@ -216,9 +241,10 @@ class _LocationBottomSheetState extends ConsumerState<LocationBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final vm = ref.watch(homeProvider);
+    final sheetPosition = vm.sheetPosition;
 
     return DraggableScrollableSheet(
-      initialChildSize: _sheetPosition,
+      initialChildSize: sheetPosition,
       minChildSize: _minPosition,
       builder: (context, scrollController) {
         return Container(
@@ -228,14 +254,19 @@ class _LocationBottomSheetState extends ConsumerState<LocationBottomSheet> {
               GestureDetector(
                 onVerticalDragUpdate: (detail) {
                   setState(() {
-                    _sheetPosition -= detail.delta.dy / _dragSensitivity;
+                    double newPosition =
+                        sheetPosition - detail.delta.dy / _dragSensitivity;
 
-                    if (_sheetPosition < _minPosition) {
-                      _sheetPosition = _minPosition;
+                    if (newPosition < _minPosition) {
+                      newPosition = _minPosition;
                     }
-                    if (_sheetPosition > _maxPosition) {
-                      _sheetPosition = _maxPosition;
+                    if (newPosition > _maxPosition) {
+                      newPosition = _maxPosition;
                     }
+
+                    ref
+                        .read(homeProvider.notifier)
+                        .setBottomSheetPosition(height: newPosition);
                   });
                 },
                 child: Padding(
