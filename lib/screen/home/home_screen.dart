@@ -43,9 +43,10 @@ class HomeScreen extends ConsumerWidget {
                             title: Text('참여코드를 입력해주세요'),
                             content: DefaultTextFormField(
                               label: '4자리 코드를 입력해주세요',
-                              onChanged: (text) => ref
-                                  .read(homeProvider.notifier)
-                                  .inviteCodeChanged(value: text),
+                              onChanged: (text) =>
+                                  ref
+                                      .read(homeProvider.notifier)
+                                      .inviteCodeChanged(value: text),
                             ),
                             actions: [
                               DefaultButton(
@@ -93,6 +94,7 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
   @override
   void initState() {
     super.initState();
+    ref.read(homeProvider.notifier).getMyInfo();
   }
 
   @override
@@ -103,61 +105,47 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
 
   @override
   Widget build(BuildContext context) {
-    final notifier = ref.watch(homeProvider.notifier);
-    return FutureBuilder<String?>(
-      future: notifier.getMyInfo(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        } else if (snapshot.hasError) {
-          return Text('Error ${snapshot.error}');
-        } else {
-          final profileImageUrl = snapshot.data;
-          return SearchBar(
-            backgroundColor: const WidgetStatePropertyAll(AppColor.white),
-            hintText: "목적지 검색",
-            leading: Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: Icon(
-                Icons.search,
-                color: AppColor.grey1,
-              ),
-            ),
-            trailing: [
-              IconButton(
-                onPressed: () {
-                  context.goNamed(MyPageScreen.name);
-                },
-                icon: profileImageUrl != null
-                    ? ClipOval(
-                    child: Image.network(
-                      profileImageUrl,
-                      width: 40,
-                      height: 40,
-                      fit: BoxFit.cover,
-                    ))
-                    : const Icon(
-                  Icons.account_circle,
-                  size: 40,
-                ),
-              )
-            ],
-            onChanged: (text) => EasyDebounce.debounce(
-              'query',
-              Duration(seconds: 1),
-                  () async {
-                ref.read(homeProvider.notifier).queryChanged(value: text);
-              },
-            ),
-          );
-        }
-      },
+    final state = ref.watch(homeProvider);
+    return SearchBar(
+      backgroundColor: const WidgetStatePropertyAll(AppColor.white),
+      hintText: "목적지 검색",
+      leading: Padding(
+        padding: const EdgeInsets.only(left: 8),
+        child: Icon(
+          Icons.search,
+          color: AppColor.grey1,
+        ),
+      ),
+      trailing: [
+        IconButton(
+          onPressed: () {
+            context.pushNamed(MyPageScreen.name);
+          },
+          icon: state.infoModel?.profileImageUrl != null
+              ? ClipOval(
+              child: Image.network(
+                state.infoModel!.profileImageUrl!,
+                width: 40,
+                height: 40,
+                fit: BoxFit.cover,
+              ))
+              : const Icon(
+            Icons.account_circle,
+            size: 40,
+          ),
+        )
+      ],
+      onChanged: (text) =>
+          EasyDebounce.debounce(
+            'query',
+            Duration(seconds: 1),
+                () async {
+              ref.read(homeProvider.notifier).queryChanged(value: text);
+            },
+          ),
     );
   }
 }
-
 // Maps
 class _Map extends ConsumerStatefulWidget {
   const _Map({super.key});
@@ -168,7 +156,7 @@ class _Map extends ConsumerStatefulWidget {
 
 class _MapState extends ConsumerState<_Map> {
   final Completer<GoogleMapController> _controller =
-      Completer<GoogleMapController>();
+  Completer<GoogleMapController>();
 
   static const CameraPosition _kGooglePlex = CameraPosition(
     target: LatLng(37.42796133580664, -122.085749655962),
@@ -192,7 +180,8 @@ class _MapState extends ConsumerState<_Map> {
       myLocationButtonEnabled: true,
       markers: vm.results
           .map(
-            (result) => Marker(
+            (result) =>
+            Marker(
               markerId: MarkerId('${result.hashCode}'),
               position: LatLng(double.parse(result.y), double.parse(result.x)),
               onTap: () {
@@ -200,7 +189,7 @@ class _MapState extends ConsumerState<_Map> {
                 print(result.toString());
               },
             ),
-          )
+      )
           .toSet(),
       onMapCreated: (controller) {
         _controller.complete(controller);
@@ -286,7 +275,10 @@ class _LocationBottomSheetState extends ConsumerState<LocationBottomSheet> {
                                 builder: (context) {
                                   return AlertDialog(
                                     title: Text(
-                                        '${MediaQuery.of(context).size.height}'),
+                                        '${MediaQuery
+                                            .of(context)
+                                            .size
+                                            .height}'),
                                     content: Container(
                                       height: 100,
                                       child: Column(

@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
 import 'package:gather_here/common/location/location_manager.dart';
+import 'package:gather_here/common/model/response/member_info_model.dart';
 import 'package:gather_here/common/model/room_create_model.dart';
 import 'package:gather_here/common/model/room_join_model.dart';
 import 'package:gather_here/common/model/search_response_model.dart';
-
 import 'package:gather_here/common/repository/map_repository.dart';
 import 'package:gather_here/common/repository/member_repository.dart';
 import 'package:gather_here/common/repository/room_repository.dart';
-
-import '../../common/storage/storage.dart';
 
 class HomeState {
   String? query; // 검색어
@@ -24,6 +21,8 @@ class HomeState {
   DateTime? targetDate;
   TimeOfDay? targetTime;
 
+  MemberInfoModel? infoModel;
+
   HomeState({
     this.query,
     this.lat,
@@ -33,6 +32,7 @@ class HomeState {
     this.inviteCode,
     this.targetDate,
     this.targetTime,
+    this.infoModel,
   });
 }
 
@@ -41,23 +41,19 @@ final homeProvider =
   final mapRepo = ref.watch(mapRepositoryProvider);
   final roomRepo = ref.watch(roomRepositoryProvider);
   final memberRepo = ref.watch(memberRepositoryProvider);
-  final storage = ref.watch(storageProvider);
-  return HomeProvider(mapRepo: mapRepo, memberRepo: memberRepo, roomRepo: roomRepo, storage: storage);
+  return HomeProvider(mapRepo: mapRepo, memberRepo: memberRepo, roomRepo: roomRepo);
 });
 
 class HomeProvider extends StateNotifier<HomeState> {
   final RoomRepository roomRepo;
   final MapRepository mapRepo;
   final MemberRepository memberRepo;
-  final FlutterSecureStorage storage;
 
   HomeProvider({
     required this.roomRepo,
     required this.mapRepo,
     required this.memberRepo,
-    required this.storage,
   }) : super(HomeState()){
-    getMyInfo();
   }
 
   void _setState() {
@@ -70,6 +66,7 @@ class HomeProvider extends StateNotifier<HomeState> {
       inviteCode: state.inviteCode,
       targetDate: state.targetDate,
       targetTime: state.targetTime,
+      infoModel: state.infoModel,
     );
   }
 
@@ -98,14 +95,14 @@ class HomeProvider extends StateNotifier<HomeState> {
     _setState();
   }
 
-  Future<String?> getMyInfo() async {
+  void getMyInfo() async {
     try {
       final memberInfo = await memberRepo.getMemberInfo();
-      return memberInfo.profileImageUrl;
+      state.infoModel = memberInfo;
+      _setState();
     } catch (err) {
       debugPrint('getMyInfo: $err');
     }
-    return null;
   }
 
   Future<bool> tapStartSharingButton() async {
