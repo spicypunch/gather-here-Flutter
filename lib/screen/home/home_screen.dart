@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gather_here/common/components/default_text_form_field.dart';
 import 'package:gather_here/common/const/colors.dart';
+import 'package:gather_here/common/storage/storage.dart';
 import 'package:gather_here/screen/my_page/my_page_screen.dart';
 import 'package:gather_here/screen/share/share_screen.dart';
 import 'package:go_router/go_router.dart';
@@ -42,9 +43,10 @@ class HomeScreen extends ConsumerWidget {
                             title: Text('참여코드를 입력해주세요'),
                             content: DefaultTextFormField(
                               label: '4자리 코드를 입력해주세요',
-                              onChanged: (text) => ref
-                                  .read(homeProvider.notifier)
-                                  .inviteCodeChanged(value: text),
+                              onChanged: (text) =>
+                                  ref
+                                      .read(homeProvider.notifier)
+                                      .inviteCodeChanged(value: text),
                             ),
                             actions: [
                               DefaultButton(
@@ -92,6 +94,7 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
   @override
   void initState() {
     super.initState();
+    ref.read(homeProvider.notifier).getMyInfo();
   }
 
   @override
@@ -102,8 +105,7 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
 
   @override
   Widget build(BuildContext context) {
-    final vm = ref.watch(homeProvider);
-
+    final state = ref.watch(homeProvider);
     return SearchBar(
       backgroundColor: const WidgetStatePropertyAll(AppColor.white),
       hintText: "목적지 검색",
@@ -117,23 +119,33 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
       trailing: [
         IconButton(
           onPressed: () {
-            // TODO: 프로필 화면으로 이동하기
-            context.goNamed(MyPageScreen.name);
+            context.pushNamed(MyPageScreen.name);
           },
-          icon: Icon(Icons.circle),
+          icon: state.infoModel?.profileImageUrl != null
+              ? ClipOval(
+              child: Image.network(
+                state.infoModel!.profileImageUrl!,
+                width: 40,
+                height: 40,
+                fit: BoxFit.cover,
+              ))
+              : const Icon(
+            Icons.account_circle,
+            size: 40,
+          ),
         )
       ],
-      onChanged: (text) => EasyDebounce.debounce(
-        'query',
-        Duration(seconds: 1),
-        () async {
-          ref.read(homeProvider.notifier).queryChanged(value: text);
-        },
-      ),
+      onChanged: (text) =>
+          EasyDebounce.debounce(
+            'query',
+            Duration(seconds: 1),
+                () async {
+              ref.read(homeProvider.notifier).queryChanged(value: text);
+            },
+          ),
     );
   }
 }
-
 // Maps
 class _Map extends ConsumerStatefulWidget {
   const _Map({super.key});
@@ -144,7 +156,7 @@ class _Map extends ConsumerStatefulWidget {
 
 class _MapState extends ConsumerState<_Map> {
   final Completer<GoogleMapController> _controller =
-      Completer<GoogleMapController>();
+  Completer<GoogleMapController>();
 
   static const CameraPosition _kGooglePlex = CameraPosition(
     target: LatLng(37.42796133580664, -122.085749655962),
@@ -168,7 +180,8 @@ class _MapState extends ConsumerState<_Map> {
       myLocationButtonEnabled: true,
       markers: vm.results
           .map(
-            (result) => Marker(
+            (result) =>
+            Marker(
               markerId: MarkerId('${result.hashCode}'),
               position: LatLng(double.parse(result.y), double.parse(result.x)),
               onTap: () {
@@ -176,7 +189,7 @@ class _MapState extends ConsumerState<_Map> {
                 print(result.toString());
               },
             ),
-          )
+      )
           .toSet(),
       onMapCreated: (controller) {
         _controller.complete(controller);
@@ -262,7 +275,10 @@ class _LocationBottomSheetState extends ConsumerState<LocationBottomSheet> {
                                 builder: (context) {
                                   return AlertDialog(
                                     title: Text(
-                                        '${MediaQuery.of(context).size.height}'),
+                                        '${MediaQuery
+                                            .of(context)
+                                            .size
+                                            .height}'),
                                     content: Container(
                                       height: 100,
                                       child: Column(
@@ -286,9 +302,11 @@ class _LocationBottomSheetState extends ConsumerState<LocationBottomSheet> {
                                       DefaultButton(
                                         title: '위치공유 시작하기',
                                         onTap: () async {
-                                          final result = await ref.read(homeProvider.notifier).tapStartSharingButton();
+                                          final result = await ref
+                                              .read(homeProvider.notifier)
+                                              .tapStartSharingButton();
                                           print(result);
-                                          if(result) {
+                                          if (result) {
                                             context.goNamed(ShareScreen.name);
                                           }
                                         },
