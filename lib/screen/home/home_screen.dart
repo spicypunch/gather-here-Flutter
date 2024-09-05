@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gather_here/common/components/default_text_form_field.dart';
 import 'package:gather_here/common/const/colors.dart';
+import 'package:gather_here/common/storage/storage.dart';
 import 'package:gather_here/screen/my_page/my_page_screen.dart';
 import 'package:gather_here/screen/share/share_screen.dart';
 import 'package:go_router/go_router.dart';
@@ -102,34 +103,57 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
 
   @override
   Widget build(BuildContext context) {
-    final vm = ref.watch(homeProvider);
-
-    return SearchBar(
-      backgroundColor: const WidgetStatePropertyAll(AppColor.white),
-      hintText: "목적지 검색",
-      leading: Padding(
-        padding: const EdgeInsets.only(left: 8),
-        child: Icon(
-          Icons.search,
-          color: AppColor.grey1,
-        ),
-      ),
-      trailing: [
-        IconButton(
-          onPressed: () {
-            // TODO: 프로필 화면으로 이동하기
-            context.goNamed(MyPageScreen.name);
-          },
-          icon: Icon(Icons.circle),
-        )
-      ],
-      onChanged: (text) => EasyDebounce.debounce(
-        'query',
-        Duration(seconds: 1),
-        () async {
-          ref.read(homeProvider.notifier).queryChanged(value: text);
-        },
-      ),
+    final notifier = ref.watch(homeProvider.notifier);
+    return FutureBuilder<String?>(
+      future: notifier.getMyInfo(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        } else if (snapshot.hasError) {
+          return Text('Error ${snapshot.error}');
+        } else {
+          final profileImageUrl = snapshot.data;
+          return SearchBar(
+            backgroundColor: const WidgetStatePropertyAll(AppColor.white),
+            hintText: "목적지 검색",
+            leading: Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: Icon(
+                Icons.search,
+                color: AppColor.grey1,
+              ),
+            ),
+            trailing: [
+              IconButton(
+                onPressed: () {
+                  context.goNamed(MyPageScreen.name);
+                },
+                icon: profileImageUrl != null
+                    ? ClipOval(
+                    child: Image.network(
+                      profileImageUrl,
+                      width: 40,
+                      height: 40,
+                      fit: BoxFit.cover,
+                    ))
+                    : const Icon(
+                  Icons.account_circle,
+                  size: 40,
+                ),
+              )
+            ],
+            onChanged: (text) => EasyDebounce.debounce(
+              'query',
+`              Duration(seconds: 1),
+                  () async {
+                ref.read(homeProvider.notifier).queryChanged(value: text);
+              },
+            ),
+          );
+        }
+      },
     );
   }
 }
@@ -286,9 +310,11 @@ class _LocationBottomSheetState extends ConsumerState<LocationBottomSheet> {
                                       DefaultButton(
                                         title: '위치공유 시작하기',
                                         onTap: () async {
-                                          final result = await ref.read(homeProvider.notifier).tapStartSharingButton();
+                                          final result = await ref
+                                              .read(homeProvider.notifier)
+                                              .tapStartSharingButton();
                                           print(result);
-                                          if(result) {
+                                          if (result) {
                                             context.goNamed(ShareScreen.name);
                                           }
                                         },

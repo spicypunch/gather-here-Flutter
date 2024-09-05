@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'package:gather_here/common/location/location_manager.dart';
 import 'package:gather_here/common/model/room_create_model.dart';
@@ -7,7 +8,10 @@ import 'package:gather_here/common/model/room_join_model.dart';
 import 'package:gather_here/common/model/search_response_model.dart';
 
 import 'package:gather_here/common/repository/map_repository.dart';
+import 'package:gather_here/common/repository/member_repository.dart';
 import 'package:gather_here/common/repository/room_repository.dart';
+
+import '../../common/storage/storage.dart';
 
 class HomeState {
   String? query; // 검색어
@@ -36,17 +40,25 @@ final homeProvider =
     AutoDisposeStateNotifierProvider<HomeProvider, HomeState>((ref) {
   final mapRepo = ref.watch(mapRepositoryProvider);
   final roomRepo = ref.watch(roomRepositoryProvider);
-  return HomeProvider(mapRepo: mapRepo, roomRepo: roomRepo);
+  final memberRepo = ref.watch(memberRepositoryProvider);
+  final storage = ref.watch(storageProvider);
+  return HomeProvider(mapRepo: mapRepo, memberRepo: memberRepo, roomRepo: roomRepo, storage: storage);
 });
 
 class HomeProvider extends StateNotifier<HomeState> {
   final RoomRepository roomRepo;
   final MapRepository mapRepo;
+  final MemberRepository memberRepo;
+  final FlutterSecureStorage storage;
 
   HomeProvider({
     required this.roomRepo,
     required this.mapRepo,
-  }) : super(HomeState());
+    required this.memberRepo,
+    required this.storage,
+  }) : super(HomeState()){
+    getMyInfo();
+  }
 
   void _setState() {
     state = HomeState(
@@ -84,6 +96,16 @@ class HomeProvider extends StateNotifier<HomeState> {
   void tapLocationMarker(SearchDocumentsModel model) {
     state.selectedResult = model;
     _setState();
+  }
+
+  Future<String?> getMyInfo() async {
+    try {
+      final memberInfo = await memberRepo.getMemberInfo();
+      return memberInfo.profileImageUrl;
+    } catch (err) {
+      debugPrint('getMyInfo: $err');
+    }
+    return null;
   }
 
   Future<bool> tapStartSharingButton() async {
