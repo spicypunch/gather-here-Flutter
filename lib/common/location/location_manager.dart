@@ -1,12 +1,16 @@
+import 'dart:io';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
-class LocationManager {
-  static final locationSetting = LocationSettings(
-    accuracy: LocationAccuracy.high,
-    distanceFilter: 100,
-  );
+final locationManagerProvider = Provider((ref) {
+  return LocationManager();
+});
 
-  static Future<Position> getCurrentPosition() async {
+class LocationManager {
+  final locationSetting = const LocationSettings(distanceFilter: 5);
+
+  Future<Position> getCurrentPosition() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     LocationPermission permission;
 
@@ -27,10 +31,30 @@ class LocationManager {
       return Future.error('위치권한 요청이 영원히 거부됨');
     }
 
+    final position = await Geolocator.getLastKnownPosition();
+
+    if (position != null) {
+      return position;
+    }
+
     return await Geolocator.getCurrentPosition(locationSettings: locationSetting);
   }
 
-  static Stream<Position?> observePosition() {
+  Stream<Position?> observePosition() {
     return Geolocator.getPositionStream(locationSettings: locationSetting);
+  }
+
+  double calculateDistance(
+    double myLatitude,
+    double myLongitude,
+    double targetLatitude,
+    double targetLongitude,
+  ) {
+    return Geolocator.distanceBetween(
+      myLatitude,
+      myLongitude,
+      targetLatitude,
+      targetLongitude,
+    );
   }
 }

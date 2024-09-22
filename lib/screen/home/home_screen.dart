@@ -1,81 +1,123 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
 
+import 'package:easy_debounce/easy_debounce.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gather_here/common/components/default_button.dart';
+import 'package:gather_here/common/components/default_layout.dart';
 import 'package:gather_here/common/components/default_text_form_field.dart';
 import 'package:gather_here/common/const/colors.dart';
-import 'package:gather_here/common/location/location_manager.dart';
-import 'package:gather_here/common/storage/storage.dart';
+import 'package:gather_here/screen/debug/debug_screen.dart';
+import 'package:gather_here/screen/home/home_provider.dart';
 import 'package:gather_here/screen/my_page/my_page_screen.dart';
 import 'package:gather_here/screen/share/share_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:easy_debounce/easy_debounce.dart';
 
-import 'package:gather_here/screen/home/home_provider.dart';
-import 'package:gather_here/common/components/default_layout.dart';
-import 'package:gather_here/common/components/default_button.dart';
+import '../../common/provider/member_info_provider.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   static get name => 'home';
 
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return DefaultLayout(
-      child: Stack(
-        children: [
-          _Map(),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Column(
-                children: [
-                  _SearchBar(),
-                  Spacer(),
-                  DefaultButton(
-                    title: '참여하기',
-                    onTap: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return AlertDialog(
-                            title: Text('참여코드를 입력해주세요'),
-                            content: DefaultTextFormField(
-                              label: '4자리 코드를 입력해주세요',
-                              onChanged: (text) =>
-                                  ref
-                                      .read(homeProvider.notifier)
-                                      .inviteCodeChanged(value: text),
-                            ),
-                            actions: [
-                              DefaultButton(
-                                title: '확인',
-                                onTap: () async {
-                                  final result = await ref
-                                      .read(homeProvider.notifier)
-                                      .tapInviteButton();
-                                  if (result) {
-                                    context.pop();
-                                    context.goNamed(ShareScreen.name);
-                                  } else {
-                                    print('Error: 방입장 실패');
-                                  }
-                                },
-                              )
-                            ],
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ],
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  late FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNode.requestFocus();
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+
+    return Focus(
+      focusNode: _focusNode,
+      onFocusChange: (hasFocus) {
+        if (hasFocus) {
+          ref.read(memberInfoProvider.notifier).getMyInfo();
+        }
+      },
+      child: DefaultLayout(
+        trailing: [
+          IconButton(
+            onPressed: () {
+              context.goNamed(DebugScreen.name);
+            },
+            icon: Icon(Icons.add),
+          ),
+        ],
+        child: Stack(
+          children: [
+            _Map(),
+            SafeArea(
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                child: Column(
+                  children: [
+                    _SearchBar(),
+                    Spacer(),
+                    DefaultButton(
+                      title: '참여하기',
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              title: Text('참여코드를 입력해주세요'),
+                              content: DefaultTextFormField(
+                                label: '4자리 코드를 입력해주세요',
+                                onChanged: (text) => ref
+                                    .read(homeProvider.notifier)
+                                    .inviteCodeChanged(value: text),
+                              ),
+                              actions: [
+                                DefaultButton(
+                                  title: '확인',
+                                  onTap: () async {
+                                    final result = await ref
+                                        .read(homeProvider.notifier)
+                                        .tapInviteButton();
+                                    if (result != null) {
+                                      context.pop();
+                                      context.pushNamed(
+                                        ShareScreen.name,
+                                        pathParameters: {'isHost': 'false'},
+                                        extra: result,
+                                      );
+                                    } else {
+                                      print('Error: 방입장 실패');
+                                    }
+                                  },
+                                )
+                              ],
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          LocationBottomSheet(),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -93,12 +135,6 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
   final _searchController = SearchController();
 
   @override
-  void initState() {
-    super.initState();
-    ref.read(homeProvider.notifier).getMyInfo();
-  }
-
-  @override
   void dispose() {
     super.dispose();
     EasyDebounce.cancel('query');
@@ -106,7 +142,7 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(homeProvider);
+    final state = ref.watch(memberInfoProvider);
     return SearchBar(
       backgroundColor: const WidgetStatePropertyAll(AppColor.white),
       hintText: "목적지 검색",
@@ -122,31 +158,31 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
           onPressed: () {
             context.pushNamed(MyPageScreen.name);
           },
-          icon: state.infoModel?.profileImageUrl != null
+          icon: state.memberInfoModel?.profileImageUrl != null
               ? ClipOval(
-              child: Image.network(
-                state.infoModel!.profileImageUrl!,
-                width: 40,
-                height: 40,
-                fit: BoxFit.cover,
-              ))
+                  child: Image.network(
+                  state.memberInfoModel!.profileImageUrl!,
+                  width: 40,
+                  height: 40,
+                  fit: BoxFit.cover,
+                ))
               : const Icon(
-            Icons.account_circle,
-            size: 40,
-          ),
+                  Icons.account_circle,
+                  size: 40,
+                ),
         )
       ],
-      onChanged: (text) =>
-          EasyDebounce.debounce(
-            'query',
-            Duration(seconds: 1),
-                () async {
-              ref.read(homeProvider.notifier).queryChanged(value: text);
-            },
-          ),
+      onChanged: (text) => EasyDebounce.debounce(
+        'query',
+        Duration(seconds: 1),
+        () async {
+          ref.read(homeProvider.notifier).queryChanged(value: text);
+        },
+      ),
     );
   }
 }
+
 // Maps
 class _Map extends ConsumerStatefulWidget {
   const _Map({super.key});
@@ -157,7 +193,7 @@ class _Map extends ConsumerStatefulWidget {
 
 class _MapState extends ConsumerState<_Map> {
   final Completer<GoogleMapController> _controller =
-  Completer<GoogleMapController>();
+      Completer<GoogleMapController>();
 
   static const CameraPosition _defaultPosition = CameraPosition(
     target: LatLng(37.5642135, -127.0016985),
@@ -168,23 +204,13 @@ class _MapState extends ConsumerState<_Map> {
   void initState() {
     super.initState();
 
-    print('what is wrong');
     // 현재 위치 가져온 후, 그 위치로 이동
-    ref.read(homeProvider.notifier).getCurrentLocation(() async {
+    ref.read(homeProvider.notifier).getCurrentLocation(() {
       final vm = ref.read(homeProvider);
-      print('현재위치 ${vm.lat} ${vm.lon}');
 
       if (vm.lat != null && vm.lon != null) {
         moveToTargetPosition(lat: vm.lat!, lon: vm.lon!);
       }
-    });
-
-    final stream = LocationManager.observePosition().listen((position) {
-      print(
-        position == null
-            ? 'Unknown'
-            : 'location ${position.latitude.toString()}, ${position.longitude.toString()}',
-      );
     });
   }
 
@@ -201,162 +227,154 @@ class _MapState extends ConsumerState<_Map> {
   Widget build(BuildContext context) {
     final vm = ref.watch(homeProvider);
 
-    return GoogleMap(
-      initialCameraPosition: _defaultPosition,
-      myLocationEnabled: true,
-      myLocationButtonEnabled: false,
-      markers: vm.results
-          .map(
-            (result) =>
-            Marker(
-              markerId: MarkerId('${result.hashCode}'),
-              position: LatLng(double.parse(result.y), double.parse(result.x)),
-              onTap: () {
-                ref.read(homeProvider.notifier).tapLocationMarker(result);
-              },
-            ),
-      )
-          .toSet(),
-      onMapCreated: (controller) {
-        _controller.complete(controller);
-      },
-    );
-  }
-}
+    // 검색 결과가 바뀔때마다 카메라 이동
+    ref.listen(homeProvider.select((value) => value.results), (prev, next) {
+      if (prev != next && next.isNotEmpty) {
+        moveToTargetPosition(lat: double.parse(next.first.y), lon: double.parse(next.first.x));
+      }
+    });
 
-// 위치정보 bottom sheet
-class LocationBottomSheet extends ConsumerStatefulWidget {
-  const LocationBottomSheet({super.key});
+    return Stack(
+      children: [
+        GoogleMap(
+          initialCameraPosition: _defaultPosition,
+          myLocationEnabled: true,
+          myLocationButtonEnabled: false,
+          markers: vm.results
+              .map(
+                (result) => Marker(
+                  markerId: MarkerId('${result.hashCode}'),
+                  position:
+                      LatLng(double.parse(result.y), double.parse(result.x)),
+                  onTap: () async {
+                    ref.read(homeProvider.notifier).tapLocationMarker(result);
 
-  @override
-  ConsumerState<LocationBottomSheet> createState() =>
-      _LocationBottomSheetState();
-}
+                    showModalBottomSheet(
+                        context: context,
+                        // useSafeArea: true,
+                        showDragHandle: true,
+                        // barrierColor: Colors.black.withAlpha(1),
+                        backgroundColor: Colors.white,
+                        builder: (context) {
+                          return SafeArea(
+                            child: Container(
+                              height: 200,
+                              color: Colors.white,
+                              padding: EdgeInsets.fromLTRB(20, 0, 20, 10),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${vm.selectedResult?.place_name}',
+                                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+                                  ),
+                                  const SizedBox(height: 20),
 
-class _LocationBottomSheetState extends ConsumerState<LocationBottomSheet> {
-  final double _maxPosition = 0.3;
-  final double _minPosition = 0.05;
-  final double _dragSensitivity = 600;
+                                  Text(
+                                    '${vm.selectedResult?.road_address_name == '' ? '알 수 없는 주소' : vm.selectedResult?.road_address_name}',
+                                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400),
+                                  ),
 
-  @override
-  Widget build(BuildContext context) {
-    final vm = ref.watch(homeProvider);
-    final sheetPosition = vm.sheetPosition;
+                                  const SizedBox(height: 10),
 
-    return DraggableScrollableSheet(
-      initialChildSize: sheetPosition,
-      minChildSize: _minPosition,
-      builder: (context, scrollController) {
-        return Container(
-          color: Colors.white,
-          child: Column(
-            children: [
-              GestureDetector(
-                onVerticalDragUpdate: (detail) {
-                  setState(() {
-                    double newPosition =
-                        sheetPosition - detail.delta.dy / _dragSensitivity;
-
-                    if (newPosition < _minPosition) {
-                      newPosition = _minPosition;
-                    }
-                    if (newPosition > _maxPosition) {
-                      newPosition = _maxPosition;
-                    }
-
-                    ref
-                        .read(homeProvider.notifier)
-                        .setBottomSheetPosition(height: newPosition);
-                  });
-                },
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Container(
-                    width: 50,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: AppColor.grey2,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ),
-              ),
-              if (vm.selectedResult != null)
-                Flexible(
-                  child: SingleChildScrollView(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${vm.selectedResult?.place_name}',
-                            style: TextStyle(
-                                fontSize: 24, fontWeight: FontWeight.w700),
-                          ),
-                          Text('${vm.selectedResult?.road_address_name}'),
-                          Text('현위치로부터 ${vm.selectedResult?.distance}m'),
-                          const SizedBox(height: 20),
-                          DefaultButton(
-                            title: '목적지로 설정',
-                            height: 40,
-                            onTap: () {
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  return AlertDialog(
-                                    title: Text(
-                                        '${MediaQuery
-                                            .of(context)
-                                            .size
-                                            .height}'),
-                                    content: Container(
-                                      height: 100,
-                                      child: Column(
-                                        children: [
-                                          GestureDetector(
-                                            onTap: () async {
-// TODO: DatePicker
-                                            },
-                                            child: Text('날짜: ${vm.targetDate}'),
-                                          ),
-                                          GestureDetector(
-                                            onTap: () async {
-// TODO: TimePicker
-                                            },
-                                            child: Text('시간: ${vm.targetTime}'),
-                                          )
-                                        ],
+                                  Row(
+                                    children: [
+                                      Text(
+                                        '현위치로부터 ',
+                                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400),
                                       ),
-                                    ),
-                                    actions: [
-                                      DefaultButton(
-                                        title: '위치공유 시작하기',
-                                        onTap: () async {
-                                          final result = await ref
-                                              .read(homeProvider.notifier)
-                                              .tapStartSharingButton();
-                                          print(result);
-                                          if (result) {
-                                            context.goNamed(ShareScreen.name);
-                                          }
-                                        },
-                                      )
+                                      Text(
+                                        '${vm.selectedResult?.distance}m',
+                                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                                      ),
                                     ],
-                                  );
-                                },
-                              );
-                            },
-                          )
-                        ],
-                      ),
-                    ),
-                  ),
-                )
-            ],
+                                  ),
+
+                                  const SizedBox(height: 15),
+                                  Spacer(),
+                                  DefaultButton(
+                                    title: '목적지로 설정',
+                                    height: 40,
+                                    onTap: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) {
+                                          return AlertDialog(
+                                            title: Text('${MediaQuery.of(context).size.height}'),
+                                            content: Container(
+                                              height: 100,
+                                              child: Column(
+                                                children: [
+                                                  GestureDetector(
+                                                    onTap: () async {
+                                                      // TODO: DatePicker
+                                                    },
+                                                    child: Text('날짜: ${vm.targetDate}'),
+                                                  ),
+                                                  GestureDetector(
+                                                    onTap: () async {
+                                                      // TODO: TimePicker
+                                                    },
+                                                    child: Text('시간: ${vm.targetTime}'),
+                                                  )
+                                                ],
+                                              ),
+                                            ),
+                                            actions: [
+                                              DefaultButton(
+                                                title: '위치공유 시작하기',
+                                                onTap: () async {
+                                                  final result =
+                                                  await ref.read(homeProvider.notifier).tapStartSharingButton();
+                                                  print(result);
+                                                  if (result != null) {
+                                                    context.pop();
+                                                    context.pop();
+                                                    context.pushNamed(
+                                                      ShareScreen.name,
+                                                      pathParameters: {'isHost': 'true'},
+                                                      extra: result,
+                                                    );
+                                                  }
+                                                },
+                                              )
+                                            ],
+                                          );
+                                        },
+                                      );
+                                    },
+                                  )
+                                ],
+                              ),
+                            ),
+                          );
+                        });
+                  },
+                ),
+              )
+              .toSet(),
+          onMapCreated: (controller) {
+            _controller.complete(controller);
+          },
+        ),
+        Positioned(
+          bottom: 100,
+          left: 10,
+          child: IconButton(
+            onPressed: () {
+              ref.read(homeProvider.notifier).getCurrentLocation(() async {
+                final vm = ref.read(homeProvider);
+                print('현재위치 ${vm.lat} ${vm.lon}');
+
+                if (vm.lat != null && vm.lon != null) {
+                  moveToTargetPosition(lat: vm.lat!, lon: vm.lon!);
+                }
+              });
+            },
+            icon: Icon(Icons.my_location),
           ),
-        );
-      },
+        ),
+      ],
     );
   }
 }
