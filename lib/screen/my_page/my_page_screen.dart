@@ -32,7 +32,7 @@ class MyPageScreen extends StatelessWidget {
               _ProfileWidget(),
               SizedBox(height: 52),
               _MenuContainerWidget(),
-              // _logoutWidget(),
+              _logoutWidget(),
             ],
           ),
         ),
@@ -304,15 +304,17 @@ class _MenuWidget extends StatelessWidget {
   }
 }
 
-class _logoutWidget extends StatelessWidget {
+class _logoutWidget extends ConsumerWidget {
   const _logoutWidget({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12.0),
       child: GestureDetector(
-        onTap: () {},
+        onTap: () {
+          ref.read(myPageProvider.notifier).logout();
+        },
         child: Container(
           width: 85,
           height: 40,
@@ -356,6 +358,14 @@ void _handleStateChanges(BuildContext context, MyPageState state) {
       context.goNamed(LoginScreen.name);
     } else {
       Utils.showSnackBar(context, '회원탈퇴에 실패했어요');
+    }
+  }
+
+  if(state.logout != null) {
+    if(state.logout == 0) {
+      context.goNamed(LoginScreen.name);
+    } else {
+      Utils.showSnackBar(context, '로그아웃에 실패했어요');
     }
   }
 }
