@@ -12,11 +12,13 @@ class MyPageState {
   int? changeNickName;
   int? changePassWord;
   int? deleteMember;
+  int? logout;
 
   MyPageState({
     this.changeNickName,
     this.changePassWord,
     this.deleteMember,
+    this.logout,
   });
 }
 
@@ -52,6 +54,7 @@ class MyPageProvider extends StateNotifier<MyPageState> {
       changeNickName: state.changeNickName,
       changePassWord: state.changePassWord,
       deleteMember: state.deleteMember,
+      logout: state.logout,
     );
   }
 
@@ -92,6 +95,18 @@ class MyPageProvider extends StateNotifier<MyPageState> {
     } catch (e) {
       debugPrint('deleteMember Err: $e');
       state.deleteMember = 1;
+      _setState();
+    }
+  }
+
+  Future<void> logout() async {
+    try {
+      await storage.deleteAll();
+      state.logout = 0;
+      _setState();
+    } catch (e) {
+      debugPrint('logout Err: $e');
+      state.logout = 1;
       _setState();
     }
   }

@@ -4,14 +4,12 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:gather_here/common/location/location_manager.dart';
 import 'package:gather_here/common/model/request/room_create_model.dart';
 import 'package:gather_here/common/model/request/room_join_model.dart';
-import 'package:gather_here/common/model/response/member_info_model.dart';
-import 'package:gather_here/common/model/response/room_response_model.dart';
 import 'package:gather_here/common/model/response/search_response_model.dart';
 import 'package:gather_here/common/repository/app_info_repository.dart';
 import 'package:gather_here/common/repository/map_repository.dart';
 import 'package:gather_here/common/repository/room_repository.dart';
 
-import '../../common/provider/member_info_provider.dart';
+import '../../common/model/response/room_response_model.dart';
 import '../../common/storage/storage.dart';
 
 class HomeState {
@@ -111,9 +109,9 @@ class HomeProvider extends StateNotifier<HomeState> {
     }
   }
 
-  Future<RoomResponseModel?> tapStartSharingButton() async {
-    state.targetDate = DateTime(2024, 08, 30);
-    state.targetTime = TimeOfDay(hour: 21, minute: 0);
+  Future<RoomResponseModel?> tapStartSharingButton(DateTime targetDate, TimeOfDay targetTime) async {
+    state.targetDate = targetDate;
+    state.targetTime = targetTime;
 
     if (state.targetDate != null && state.targetTime != null && state.selectedResult != null) {
       try {

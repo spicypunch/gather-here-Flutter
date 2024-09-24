@@ -1,11 +1,13 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:easy_debounce/easy_debounce.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gather_here/common/components/default_button.dart';
+import 'package:gather_here/common/components/default_date_dialog.dart';
 import 'package:gather_here/common/components/default_layout.dart';
-import 'package:gather_here/common/components/default_text_form_field.dart';
+import 'package:gather_here/common/components/default_text_field_dialog.dart';
 import 'package:gather_here/common/const/colors.dart';
 import 'package:gather_here/screen/debug/debug_screen.dart';
 import 'package:gather_here/screen/home/home_provider.dart';
@@ -26,98 +28,62 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  late FocusNode _focusNode;
-
-  @override
-  void initState() {
-    super.initState();
-    _focusNode = FocusNode();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _focusNode.requestFocus();
-    });
-  }
-
-  @override
-  void dispose() {
-    _focusNode.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-
-    return Focus(
-      focusNode: _focusNode,
-      onFocusChange: (hasFocus) {
-        if (hasFocus) {
-          ref.read(memberInfoProvider.notifier).getMyInfo();
-        }
-      },
-      child: DefaultLayout(
-        trailing: [
-          IconButton(
-            onPressed: () {
-              context.goNamed(DebugScreen.name);
-            },
-            icon: Icon(Icons.add),
-          ),
-        ],
-        child: Stack(
-          children: [
-            _Map(),
-            SafeArea(
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                child: Column(
-                  children: [
-                    _SearchBar(),
-                    Spacer(),
-                    DefaultButton(
-                      title: '참여하기',
-                      onTap: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              title: Text('참여코드를 입력해주세요'),
-                              content: DefaultTextFormField(
-                                label: '4자리 코드를 입력해주세요',
-                                onChanged: (text) => ref
-                                    .read(homeProvider.notifier)
-                                    .inviteCodeChanged(value: text),
-                              ),
-                              actions: [
-                                DefaultButton(
-                                  title: '확인',
-                                  onTap: () async {
-                                    final result = await ref
-                                        .read(homeProvider.notifier)
-                                        .tapInviteButton();
-                                    if (result != null) {
-                                      context.pop();
-                                      context.pushNamed(
-                                        ShareScreen.name,
-                                        pathParameters: {'isHost': 'false'},
-                                        extra: result,
-                                      );
-                                    } else {
-                                      print('Error: 방입장 실패');
-                                    }
-                                  },
-                                )
-                              ],
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ],
-                ),
+    return DefaultLayout(
+      trailing: [
+        IconButton(
+          onPressed: () {
+            context.goNamed(DebugScreen.name);
+          },
+          icon: Icon(Icons.add),
+        ),
+      ],
+      child: Stack(
+        children: [
+          _Map(),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Column(
+                children: [
+                  _SearchBar(),
+                  Spacer(),
+                  DefaultButton(
+                    title: '참여하기',
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return DefaultTextFieldDialog(
+                            title: '참여코드를 입력해주세요',
+                            labels: const ['4자리 코드를 입력해주세요'],
+                            onChanged: (text) async {
+                              ref
+                                  .read(homeProvider.notifier)
+                                  .inviteCodeChanged(value: text[0]);
+                              final result = await ref.read(homeProvider.notifier).tapInviteButton();
+                              if (result != null) {
+                                context.pop();
+                                context.pushNamed(
+                                  ShareScreen.name,
+                                  pathParameters: {'isHost': 'false'},
+                                  extra: result,
+                                );
+                              } else {
+                                debugPrint('Error: 방입장 실패');
+                              }
+                            },
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -200,18 +166,47 @@ class _MapState extends ConsumerState<_Map> {
     zoom: 14.4746,
   );
 
+  BitmapDescriptor? _defaultMarker;
+  BitmapDescriptor? _focusedMarker;
+
   @override
   void initState() {
     super.initState();
+    _createMarkerIcons();
 
     // 현재 위치 가져온 후, 그 위치로 이동
     ref.read(homeProvider.notifier).getCurrentLocation(() {
-      final vm = ref.read(homeProvider);
+      final state = ref.read(homeProvider);
 
-      if (vm.lat != null && vm.lon != null) {
-        moveToTargetPosition(lat: vm.lat!, lon: vm.lon!);
+      if (state.lat != null && state.lon != null) {
+        moveToTargetPosition(lat: state.lat!, lon: state.lon!);
       }
     });
+  }
+
+  Future<void> _createMarkerIcons() async {
+    _defaultMarker = await _createMarkerIcon(Colors.red, 20);
+    _focusedMarker =
+        BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
+    setState(() {});
+  }
+
+  /// PictureRecorder는 그래픽 작업을 기록하는 객체
+  /// 메모리에 그래픽 작업을 저장하여 나중에 이미지로 변환가능
+  /// Canvas를 통해 실제로 그리기 작업을 함
+  /// Paint는 그리기 작업의 스타일을 설정
+  /// drawCircle로 원을 그리고 Offset(size / 2, size / 2)를 하면 원의 중심점을 정의함
+  /// endRecording()으로 그리기 작업을 종료하고 toImage로 이미지로 변환
+  Future<BitmapDescriptor> _createMarkerIcon(Color color, double size) async {
+    final pictureRecorder = ui.PictureRecorder();
+    final canvas = Canvas(pictureRecorder);
+    final paint = Paint()..color = color;
+    canvas.drawCircle(Offset(size / 2, size / 2), size / 2, paint);
+    final img = await pictureRecorder
+        .endRecording()
+        .toImage(size.toInt(), size.toInt());
+    final data = await img.toByteData(format: ui.ImageByteFormat.png);
+    return BitmapDescriptor.fromBytes(data!.buffer.asUint8List());
   }
 
   // 특정 위치로 카메라 포지션 이동
@@ -225,12 +220,13 @@ class _MapState extends ConsumerState<_Map> {
 
   @override
   Widget build(BuildContext context) {
-    final vm = ref.watch(homeProvider);
+    final state = ref.watch(homeProvider);
 
-    // 검색 결과가 바뀔때마다 카메라 이동
+    // 검색 결과가 바뀔 때마다 카메라 이동
     ref.listen(homeProvider.select((value) => value.results), (prev, next) {
       if (prev != next && next.isNotEmpty) {
-        moveToTargetPosition(lat: double.parse(next.first.y), lon: double.parse(next.first.x));
+        moveToTargetPosition(
+            lat: double.parse(next.first.y), lon: double.parse(next.first.x));
       }
     });
 
@@ -240,119 +236,106 @@ class _MapState extends ConsumerState<_Map> {
           initialCameraPosition: _defaultPosition,
           myLocationEnabled: true,
           myLocationButtonEnabled: false,
-          markers: vm.results
-              .map(
-                (result) => Marker(
-                  markerId: MarkerId('${result.hashCode}'),
-                  position:
-                      LatLng(double.parse(result.y), double.parse(result.x)),
-                  onTap: () async {
-                    ref.read(homeProvider.notifier).tapLocationMarker(result);
+          markers: state.results.map((result) {
+            final isSelected = result == state.selectedResult;
+            return Marker(
+              markerId: MarkerId('${result.hashCode}'),
+              position: LatLng(double.parse(result.y), double.parse(result.x)),
+              icon: isSelected
+                  ? (_focusedMarker ?? BitmapDescriptor.defaultMarker)
+                  : (_defaultMarker ?? BitmapDescriptor.defaultMarker),
+              onTap: () async {
+                ref.read(homeProvider.notifier).tapLocationMarker(result);
 
-                    showModalBottomSheet(
-                        context: context,
-                        // useSafeArea: true,
-                        showDragHandle: true,
-                        // barrierColor: Colors.black.withAlpha(1),
-                        backgroundColor: Colors.white,
-                        builder: (context) {
-                          return SafeArea(
-                            child: Container(
-                              height: 200,
-                              color: Colors.white,
-                              padding: EdgeInsets.fromLTRB(20, 0, 20, 10),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '${vm.selectedResult?.place_name}',
-                                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
-                                  ),
-                                  const SizedBox(height: 20),
-
-                                  Text(
-                                    '${vm.selectedResult?.road_address_name == '' ? '알 수 없는 주소' : vm.selectedResult?.road_address_name}',
-                                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400),
-                                  ),
-
-                                  const SizedBox(height: 10),
-
-                                  Row(
-                                    children: [
-                                      Text(
-                                        '현위치로부터 ',
-                                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400),
-                                      ),
-                                      Text(
-                                        '${vm.selectedResult?.distance}m',
-                                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-                                      ),
-                                    ],
-                                  ),
-
-                                  const SizedBox(height: 15),
-                                  Spacer(),
-                                  DefaultButton(
-                                    title: '목적지로 설정',
-                                    height: 40,
-                                    onTap: () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (context) {
-                                          return AlertDialog(
-                                            title: Text('${MediaQuery.of(context).size.height}'),
-                                            content: Container(
-                                              height: 100,
-                                              child: Column(
-                                                children: [
-                                                  GestureDetector(
-                                                    onTap: () async {
-                                                      // TODO: DatePicker
-                                                    },
-                                                    child: Text('날짜: ${vm.targetDate}'),
-                                                  ),
-                                                  GestureDetector(
-                                                    onTap: () async {
-                                                      // TODO: TimePicker
-                                                    },
-                                                    child: Text('시간: ${vm.targetTime}'),
-                                                  )
-                                                ],
-                                              ),
-                                            ),
-                                            actions: [
-                                              DefaultButton(
-                                                title: '위치공유 시작하기',
-                                                onTap: () async {
-                                                  final result =
-                                                  await ref.read(homeProvider.notifier).tapStartSharingButton();
-                                                  print(result);
-                                                  if (result != null) {
-                                                    context.pop();
-                                                    context.pop();
-                                                    context.pushNamed(
-                                                      ShareScreen.name,
-                                                      pathParameters: {'isHost': 'true'},
-                                                      extra: result,
-                                                    );
-                                                  }
-                                                },
-                                              )
-                                            ],
-                                          );
-                                        },
-                                      );
-                                    },
-                                  )
-                                ],
-                              ),
+                showModalBottomSheet(
+                  context: context,
+                  // useSafeArea: true,
+                  showDragHandle: true,
+                  // barrierColor: Colors.black.withAlpha(1),
+                  backgroundColor: Colors.white,
+                  builder: (context) {
+                    return SafeArea(
+                      child: Container(
+                        height: 200,
+                        color: Colors.white,
+                        padding: EdgeInsets.fromLTRB(20, 0, 20, 10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${state.selectedResult?.place_name}',
+                              style: const TextStyle(
+                                  fontSize: 24, fontWeight: FontWeight.w700),
                             ),
-                          );
-                        });
+                            const SizedBox(height: 20),
+                            Text(
+                              '${state.selectedResult?.road_address_name == '' ? '알 수 없는 주소' : state.selectedResult?.road_address_name}',
+                              style: const TextStyle(
+                                  fontSize: 20, fontWeight: FontWeight.w400),
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                const Text(
+                                  '현위치로부터 ',
+                                  style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w400),
+                                ),
+                                Text(
+                                  '${state.selectedResult?.distance}m',
+                                  style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 15),
+                            Spacer(),
+                            DefaultButton(
+                              title: '목적지로 설정',
+                              height: 40,
+                              onTap: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return DefaultDateDialog(
+                                      destination:
+                                          state.selectedResult!.place_name!,
+                                      // targetDate: homeState.targetDate,
+                                      // targetTime: homeState.targetTime,
+                                      onTab: (dateTime, timeOfDay) async {
+                                        final result = await ref
+                                            .read(homeProvider.notifier)
+                                            .tapStartSharingButton(
+                                              dateTime,
+                                              timeOfDay,
+                                            );
+                                        print(result);
+                                        if (result != null) {
+                                          context.pop();
+                                          context.pop();
+                                          context.pushNamed(
+                                            ShareScreen.name,
+                                            pathParameters: {'isHost': 'true'},
+                                            extra: result,
+                                          );
+                                        }
+                                      },
+                                    );
+                                  },
+                                );
+                              },
+                            )
+                          ],
+                        ),
+                      ),
+                    );
                   },
-                ),
-              )
-              .toSet(),
+                );
+              },
+            );
+          }).toSet(),
           onMapCreated: (controller) {
             _controller.complete(controller);
           },
@@ -363,11 +346,12 @@ class _MapState extends ConsumerState<_Map> {
           child: IconButton(
             onPressed: () {
               ref.read(homeProvider.notifier).getCurrentLocation(() async {
-                final vm = ref.read(homeProvider);
-                print('현재위치 ${vm.lat} ${vm.lon}');
+                final homeState = ref.read(homeProvider);
+                print('현재위치 ${homeState.lat} ${homeState.lon}');
 
-                if (vm.lat != null && vm.lon != null) {
-                  moveToTargetPosition(lat: vm.lat!, lon: vm.lon!);
+                if (homeState.lat != null && homeState.lon != null) {
+                  moveToTargetPosition(
+                      lat: homeState.lat!, lon: homeState.lon!);
                 }
               });
             },
