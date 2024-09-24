@@ -28,6 +28,24 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+
+  @override
+  void initState() {
+    super.initState();
+    _setup();
+  }
+
+  void _setup() async {
+    final result = await ref.read(homeProvider.notifier).getRoomInfo();
+    if (result != null) {
+      context.pushNamed(
+        ShareScreen.name,
+        pathParameters: {'isHost': 'false'},
+        extra: result,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultLayout(
