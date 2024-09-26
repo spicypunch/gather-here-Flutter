@@ -37,7 +37,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _setup() async {
     final result = await ref.read(homeProvider.notifier).getRoomInfo();
-    if (result != null) {
+    if (result != null && result.roomSeq != null) {
       context.pushNamed(
         ShareScreen.name,
         pathParameters: {'isHost': 'false'},
@@ -203,7 +203,7 @@ class _MapState extends ConsumerState<_Map> {
   }
 
   Future<void> _createMarkerIcons() async {
-    _defaultMarker = await _createMarkerIcon(Colors.red, 20);
+    _defaultMarker = await _createMarkerIcon(Colors.red, 40);
     _focusedMarker =
         BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
     setState(() {});

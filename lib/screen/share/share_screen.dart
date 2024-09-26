@@ -236,7 +236,7 @@ class _BottomSheetState extends ConsumerState<_BottomSheet> {
                       children: [
                         if (state.roomModel?.encounterDate != null)
                           Text(
-                            Utils.makeMeetingHeaderLabel(DateTime.parse(state.roomModel!.encounterDate)),
+                            Utils.makeMeetingHeaderLabel(DateTime.parse(state.roomModel!.encounterDate!)),
                             style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20, height: 1),
                             maxLines: 2,
                           ),
@@ -263,7 +263,7 @@ class _BottomSheetState extends ConsumerState<_BottomSheet> {
                       icon: Icon(Icons.content_copy),
                       onPressed: () {
                         if (state.roomModel?.shareCode != null) {
-                          Clipboard.setData(ClipboardData(text: state.roomModel!.shareCode));
+                          Clipboard.setData(ClipboardData(text: state.roomModel!.shareCode!));
                         }
                       },
                     ),

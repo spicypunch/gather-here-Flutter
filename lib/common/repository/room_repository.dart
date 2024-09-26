@@ -48,6 +48,6 @@ abstract class RoomRepository {
   @Headers({
     'accessToken': 'true',
   })
-  @GET('/rooms')
-  Future<RoomResponseModel?> getRoom();
+  @GET('')
+  Future<RoomResponseModel> getRoom();
 }

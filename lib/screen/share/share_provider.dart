@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +9,7 @@ import 'package:gather_here/common/model/socket_model.dart';
 import 'package:gather_here/common/model/socket_response_model.dart';
 import 'package:gather_here/common/repository/room_repository.dart';
 import 'package:gather_here/screen/share/socket_manager.dart';
+import 'package:geolocator/geolocator.dart';
 
 class ShareState {
   double? myLat; // 위도
@@ -47,11 +49,14 @@ class ShareProvider extends StateNotifier<ShareState> {
   final SocketManager socketManager;
   final LocationManager locationManager;
 
+  late final StreamSubscription<Position?> _positionStream;
+
   ShareProvider({
     required this.roomRepository,
     required this.socketManager,
     required this.locationManager,
   }) : super(ShareState(members: [])) {}
+
 
   void _setState() {
     state = ShareState(
@@ -75,7 +80,7 @@ class ShareProvider extends StateNotifier<ShareState> {
 
     // 남은 시간 계산 및 할당
 
-    final parsedDate = DateTime.parse(roomModel.encounterDate);
+    final parsedDate = DateTime.parse(roomModel.encounterDate!);
     final difference = parsedDate.difference(DateTime.now());
 
     state.remainSeconds = difference.inSeconds;
@@ -88,8 +93,8 @@ class ShareProvider extends StateNotifier<ShareState> {
     final distance = locationManager.calculateDistance(
       state.myLat!,
       state.myLong!,
-      state.roomModel!.destinationLat,
-      state.roomModel!.destinationLng,
+      state.roomModel!.destinationLat!,
+      state.roomModel!.destinationLng!,
     );
     state.distance = distance;
     _setState();
@@ -123,7 +128,8 @@ class ShareProvider extends StateNotifier<ShareState> {
   void disconnectSocket() async {
     if (state.roomModel?.roomSeq != null) {
       await socketManager.close();
-      roomRepository.postExitRoom(body: RoomExitModel(roomSeq: state.roomModel!.roomSeq));
+      _positionStream.cancel();
+      roomRepository.postExitRoom(body: RoomExitModel(roomSeq: state.roomModel!.roomSeq!));
     }
   }
 
@@ -142,8 +148,8 @@ class ShareProvider extends StateNotifier<ShareState> {
     final distance = locationManager.calculateDistance(
       state.myLat!,
       state.myLong!,
-      state.roomModel!.destinationLat,
-      state.roomModel!.destinationLng,
+      state.roomModel!.destinationLat!,
+      state.roomModel!.destinationLng!,
     );
     state.distance = distance;
     _setState();
@@ -151,7 +157,8 @@ class ShareProvider extends StateNotifier<ShareState> {
 
   // 위치정보 구독하기
   void observeMyLocation(void Function(double, double) callback) {
-    locationManager.observePosition().listen(
+    _positionStream =
+        locationManager.observePosition().listen(
       (position) {
         print(position.toString());
         if (position != null) {

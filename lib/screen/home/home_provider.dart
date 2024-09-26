@@ -8,6 +8,7 @@ import 'package:gather_here/common/model/response/search_response_model.dart';
 import 'package:gather_here/common/repository/app_info_repository.dart';
 import 'package:gather_here/common/repository/map_repository.dart';
 import 'package:gather_here/common/repository/room_repository.dart';
+import 'package:intl/intl.dart';
 
 import '../../common/model/response/room_response_model.dart';
 import '../../common/storage/storage.dart';
@@ -35,7 +36,8 @@ class HomeState {
   });
 }
 
-final homeProvider = AutoDisposeStateNotifierProvider<HomeProvider, HomeState>((ref) {
+final homeProvider =
+    AutoDisposeStateNotifierProvider<HomeProvider, HomeState>((ref) {
   final mapRepo = ref.watch(mapRepositoryProvider);
   final roomRepo = ref.watch(roomRepositoryProvider);
   final appInfoRepo = ref.watch(appInfoRepositoryProvider);
@@ -97,7 +99,8 @@ class HomeProvider extends StateNotifier<HomeState> {
     }
 
     try {
-      final result = await roomRepo.postJoinRoom(body: RoomJoinModel(shareCode: state.inviteCode!));
+      final result = await roomRepo.postJoinRoom(
+          body: RoomJoinModel(shareCode: state.inviteCode!));
       return result;
     } catch (err) {
       print('${err.toString()}');
@@ -107,25 +110,38 @@ class HomeProvider extends StateNotifier<HomeState> {
 
   void getAppInfo() async {
     try {
-      final result =  await appInfoRepo.getAppInfo();
+      final result = await appInfoRepo.getAppInfo();
       storage.write(key: StorageKey.appInfo.name, value: result.appVersion);
     } catch (err) {
       debugPrint('앱 정보 가져오기 실패');
     }
   }
 
-  Future<RoomResponseModel?> tapStartSharingButton(DateTime targetDate, TimeOfDay targetTime) async {
+  Future<RoomResponseModel?> tapStartSharingButton(
+      DateTime targetDate, TimeOfDay targetTime) async {
     state.targetDate = targetDate;
     state.targetTime = targetTime;
+    final encounterDate = DateFormat('yyyy-MM-dd HH:mm').format(
+      DateTime(
+        targetDate.year,
+        targetDate.month,
+        targetDate.day,
+        targetTime.hour,
+        targetTime.minute,
+      ),
+    );
+    print(encounterDate);
 
-    if (state.targetDate != null && state.targetTime != null && state.selectedResult != null) {
+    if (state.targetDate != null &&
+        state.targetTime != null &&
+        state.selectedResult != null) {
       try {
         final result = await roomRepo.postCreateRoom(
           body: RoomCreateModel(
             destinationLat: double.parse(state.selectedResult!.y),
             destinationLng: double.parse(state.selectedResult!.x),
             destinationName: state.selectedResult?.place_name ?? "",
-            encounterDate: "2024-09-30 23:00",
+            encounterDate: encounterDate,
           ),
         );
         print(result.toString());
@@ -148,8 +164,12 @@ class HomeProvider extends StateNotifier<HomeState> {
     _setState();
 
     // 현재좌표와, 쿼리가 있다면 검색하기
-    if (state.query != null && state.query!.isNotEmpty && state.lat != null && state.lon != null) {
-      final result = await mapRepo.getSearchResults(query: state.query!, x: state.lon!, y: state.lat!);
+    if (state.query != null &&
+        state.query!.isNotEmpty &&
+        state.lat != null &&
+        state.lon != null) {
+      final result = await mapRepo.getSearchResults(
+          query: state.query!, x: state.lon!, y: state.lat!);
       state.results = result.documents ?? [];
       _setState();
     }

@@ -82,7 +82,6 @@ class _DefaultTextFieldDialogState extends State<DefaultTextFieldDialog> {
                   onTap: () {
                     List<String> values = _controllers.map((c) => c.text).toList();
                     widget.onChanged(values);
-                    context.pop();
                   },
                 ),
               ],
@@ -94,7 +93,7 @@ class _DefaultTextFieldDialogState extends State<DefaultTextFieldDialog> {
             child: IconButton(
               icon: const Icon(Icons.close),
               onPressed: () {
-                Navigator.of(context).pop();
+                context.pop();
               },
             ),
           ),
