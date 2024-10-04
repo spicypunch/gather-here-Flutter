@@ -185,7 +185,7 @@ class ShareProvider extends StateNotifier<ShareState> {
 
   // 타이머 ++
   void timeTick() {
-    if (state.remainSeconds == 0) {
+    if (state.remainSeconds <= 0) {
       return;
     }
     state.remainSeconds -= 1;

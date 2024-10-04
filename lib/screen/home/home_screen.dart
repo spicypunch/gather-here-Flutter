@@ -313,20 +313,32 @@ class _MapState extends ConsumerState<_Map> {
   // 현재위치 버튼
   Widget _currentLocationButton() {
     return Positioned(
-      bottom: 100,
-      left: 10,
-      child: IconButton(
-        onPressed: () {
-          ref.read(homeProvider.notifier).getCurrentLocation(() async {
-            final homeState = ref.read(homeProvider);
-            debugPrint('현재위치 ${homeState.lat} ${homeState.lon}');
+      bottom: 120,
+      left: 20,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              spreadRadius: 2,
+              blurRadius: 5,
+            ),
+          ],
+        ),
+        child: IconButton(
+          onPressed: () {
+            ref.read(homeProvider.notifier).getCurrentLocation(() async {
+              final homeState = ref.read(homeProvider);
 
-            if (homeState.lat != null && homeState.lon != null) {
-              _moveToTargetPosition(lat: homeState.lat!, lon: homeState.lon!);
-            }
-          });
-        },
-        icon: const Icon(Icons.my_location),
+              if (homeState.lat != null && homeState.lon != null) {
+                _moveToTargetPosition(lat: homeState.lat!, lon: homeState.lon!);
+              }
+            });
+          },
+          icon: const Icon(Icons.my_location),
+        ),
       ),
     );
   }
@@ -398,7 +410,7 @@ class _SelectedLocationSheet extends ConsumerWidget {
 
     return SafeArea(
       child: Container(
-        height: 200,
+        height: 220,
         color: Colors.white,
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
         child: Column(
