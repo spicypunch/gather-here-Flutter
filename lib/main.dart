@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+
 import 'package:gather_here/common/provider/provider_observer.dart';
 import 'package:gather_here/common/router/router.dart';
 
@@ -17,6 +19,14 @@ class _App extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp.router(
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en', ''), // English, no country code
+        Locale('ko', ''), // Korean, no country code
+      ],
       theme: ThemeData(fontFamily: 'Pretendard'),
       routerConfig: ref.read(routerProvider),
     );

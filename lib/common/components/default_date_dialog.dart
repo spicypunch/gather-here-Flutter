@@ -6,14 +6,10 @@ import 'package:intl/intl.dart';
 class DefaultDateDialog extends StatefulWidget {
   final String destination;
 
-  // final DateTime? targetDate;
-  // final TimeOfDay? targetTime;
   final Function(DateTime, TimeOfDay) onTab;
 
   const DefaultDateDialog({
     required this.destination,
-    // required this.targetDate,
-    // required this.targetTime,
     required this.onTab,
     super.key,
   });
@@ -49,133 +45,153 @@ class _DefaultDateDialogState extends State<DefaultDateDialog> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const SizedBox(height: 30),
-
-                /// DatePicker
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: GestureDetector(
-                    onTap: () async {
-                      final pickedDate = await showDatePicker(
-                        context: context,
-                        initialDate: dateTime,
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime(2100),
-                        builder: (context, child) {
-                          return Theme(
-                            data: Theme.of(context).copyWith(
-                              colorScheme: const ColorScheme.light(
-                                primary: AppColor.main,
-                                onPrimary: AppColor.white,
-                                onSurface: AppColor.grey1,
-                              ),
-                              textButtonTheme: TextButtonThemeData(
-                                style: TextButton.styleFrom(
-                                  foregroundColor: AppColor.main,
-                                ),
-                              ),
-                            ),
-                            child: child!,
-                          );
-                        },
-                      );
-                      if (pickedDate != null) {
-                        setState(() {
-                          dateTime = pickedDate;
-                        });
-                      }
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          '날짜',
-                          style: TextStyle(color: AppColor.grey1, fontSize: 18),
-                        ),
-                        Text(
-                          DateFormat('MM-dd').format(dateTime),
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                /// TimePicker
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: GestureDetector(
-                    onTap: () async {
-                      final TimeOfDay? pickedTime = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.now(),
-                        builder: (BuildContext context, Widget? child) {
-                          return Theme(
-                            data: ThemeData.light().copyWith(
-                              colorScheme: const ColorScheme.light(
-                                primary: AppColor.main,
-                                onPrimary: AppColor.white,
-                                surface: AppColor.background,
-                                onSurface: AppColor.grey1,
-                              ),
-                              dialogBackgroundColor: AppColor.background,
-                            ),
-                            child: child!,
-                          );
-                        },
-                      );
-                      if (pickedTime != null) {
-                        setState(() {
-                          timeOfDay = pickedTime;
-                        });
-                      }
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          '시간',
-                          style: TextStyle(color: AppColor.grey1, fontSize: 18),
-                        ),
-                        Text(
-                          timeOfDay.format(context),
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                _datePicker(),
+                _timePicker(),
                 const SizedBox(height: 30),
-                Text(
-                  widget.destination,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                _destinationLabel(),
                 const SizedBox(height: 46),
-                DefaultButton(
-                    title: '위치공유 시작하기',
-                    onTap: () => widget.onTab(dateTime, timeOfDay))
+                _startButton(),
               ],
             ),
           ),
-          Positioned(
-            top: 10,
-            right: 10,
-            child: IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ),
+          _closeButton(),
         ],
+      ),
+    );
+  }
+
+  Widget _timePicker() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      child: GestureDetector(
+        onTap: () async {
+          final TimeOfDay? pickedTime = await showTimePicker(
+            context: context,
+            initialTime: TimeOfDay.now(),
+            initialEntryMode: TimePickerEntryMode.inputOnly,
+            helpText: '약속 시간을 입력하세요',
+            builder: (BuildContext context, Widget? child) {
+              return Theme(
+                data: Theme.of(context).copyWith(
+                    colorScheme: ColorScheme.light(
+                        primary: AppColor.main
+                    ),
+                    timePickerTheme: TimePickerThemeData(
+                      dayPeriodColor: AppColor.main,
+                    )
+                ),
+                child: child!,
+              );
+            },
+          );
+          if (pickedTime != null) {
+            setState(() {
+              timeOfDay = pickedTime;
+            });
+          }
+        },
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              '시간',
+              style: TextStyle(color: AppColor.grey1, fontSize: 18),
+            ),
+            Text(
+              timeOfDay.format(context),
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _datePicker() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      child: GestureDetector(
+        onTap: () async {
+          final pickedDate = await showDatePicker(
+            context: context,
+            initialDate: dateTime,
+            firstDate: DateTime.now(),
+            lastDate: DateTime.now().add(const Duration(days: 1)),
+            helpText: '약속 날짜를 입력하세요',
+            initialEntryMode: DatePickerEntryMode.calendarOnly,
+            builder: (context, child) {
+              return Theme(
+                data: Theme.of(context).copyWith(
+                  colorScheme: const ColorScheme.light(
+                    primary: AppColor.main,
+                    onPrimary: AppColor.white,
+                    onSurface: AppColor.grey1,
+                  ),
+                  textButtonTheme: TextButtonThemeData(
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColor.main,
+                    ),
+                  ),
+                ),
+                child: child!,
+              );
+            },
+          );
+          if (pickedDate != null) {
+            setState(() {
+              dateTime = pickedDate;
+            });
+          }
+        },
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              '날짜',
+              style: TextStyle(color: AppColor.grey1, fontSize: 18),
+            ),
+            Text(
+              DateFormat('MM-dd').format(dateTime),
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _destinationLabel() {
+    return Text(
+      widget.destination,
+      style: const TextStyle(
+        fontSize: 24,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+  }
+
+  Widget _startButton() {
+    return DefaultButton(
+      title: '위치공유 시작하기',
+      onTap: () => widget.onTab(dateTime, timeOfDay),
+    );
+  }
+
+  Widget _closeButton() {
+    return Positioned(
+      top: 10,
+      right: 10,
+      child: IconButton(
+        icon: const Icon(Icons.close),
+        onPressed: () {
+          Navigator.of(context).pop();
+        },
       ),
     );
   }
