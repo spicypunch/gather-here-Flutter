@@ -68,7 +68,7 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: SafeArea(
         child: Align(
-          alignment: Alignment.topRight,
+          alignment: Alignment.topLeft,
           child: IconButton(
             onPressed: () {
               showDialog(
@@ -179,11 +179,13 @@ class _MapState extends ConsumerState<_Map> {
     });
   }
 
-  // 특정 위치로 카메라 포지션 이동
+  // 특정 위치로 카메라 포지션 이동 (TrackingMode가 On일때만)
   void _moveToTargetPosition({required double lat, required double lon}) async {
-    final GoogleMapController controller = await _controller.future;
-    final targetPosition = CameraPosition(target: LatLng(lat, lon), zoom: 14);
-    await controller.animateCamera(CameraUpdate.newCameraPosition(targetPosition));
+    if (ref.read(shareProvider).isTracking) {
+      final GoogleMapController controller = await _controller.future;
+      final targetPosition = CameraPosition(target: LatLng(lat, lon), zoom: 14);
+      await controller.animateCamera(CameraUpdate.newCameraPosition(targetPosition));
+    }
   }
 
   @override
@@ -220,15 +222,35 @@ class _MapState extends ConsumerState<_Map> {
   Widget _myLocationButton() {
     final state = ref.watch(shareProvider);
 
-    return Align(
-      alignment: Alignment.bottomLeft,
-      child: IconButton(
-        onPressed: () {
-          if (state.myLat != null && state.myLong != null) {
-            _moveToTargetPosition(lat: state.myLat!, lon: state.myLong!);
-          }
-        },
-        icon: Icon(Icons.my_location),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: SafeArea(
+        child: Align(
+          alignment: Alignment.topRight,
+          child: IconButton(
+            onPressed: () {
+              Utils.showSnackBar(context, '내 위치 추적모드 ${state.isTracking ? 'off' : 'on'}');
+              ref.read(shareProvider.notifier).toggleTrackingButton();
+              if (state.myLat != null && state.myLong != null) {
+                _moveToTargetPosition(lat: state.myLat!, lon: state.myLong!);
+              }
+            },
+            style: IconButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            icon: Container(
+              height: 50,
+              padding: EdgeInsets.all(10.0),
+              child: Icon(Icons.my_location, size: 30, color: state.isTracking ? AppColor.main : AppColor.black1),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

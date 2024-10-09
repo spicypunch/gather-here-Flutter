@@ -26,6 +26,7 @@ class ShareState {
   List<SocketMemberListModel> members;
   List<Marker?> markers;
   int remainSeconds;
+  bool isTracking;
 
   ShareState({
     this.myLat,
@@ -36,6 +37,7 @@ class ShareState {
     required this.members,
     required this.markers,
     this.remainSeconds = 0,
+    required this.isTracking,
   });
 }
 
@@ -66,7 +68,7 @@ class ShareProvider extends StateNotifier<ShareState> {
     required this.socketManager,
     required this.locationManager,
     required this.router,
-  }) : super(ShareState(members: [], markers: [])) {}
+  }) : super(ShareState(members: [], markers: [], isTracking: true)) {}
 
   void _setState() {
     state = ShareState(
@@ -78,6 +80,7 @@ class ShareProvider extends StateNotifier<ShareState> {
       members: state.members,
       markers: state.markers,
       remainSeconds: state.remainSeconds,
+      isTracking: state.isTracking,
     );
   }
 
@@ -211,6 +214,12 @@ class ShareProvider extends StateNotifier<ShareState> {
       return;
     }
     state.remainSeconds -= 1;
+    _setState();
+  }
+
+  // 내 위치 추적 버튼 toggle
+  void toggleTrackingButton() {
+    state.isTracking = !state.isTracking;
     _setState();
   }
 }
