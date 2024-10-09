@@ -12,8 +12,6 @@ SocketResponseModel _$SocketResponseModelFromJson(Map<String, dynamic> json) =>
       memberLocationResList: (json['memberLocationResList'] as List<dynamic>)
           .map((e) => SocketMemberListModel.fromJson(e as Map<String, dynamic>))
           .toList(),
-      scoreRes:
-          SocketScoreModel.fromJson(json['scoreRes'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$SocketResponseModelToJson(
@@ -21,7 +19,6 @@ Map<String, dynamic> _$SocketResponseModelToJson(
     <String, dynamic>{
       'roomSeq': instance.roomSeq,
       'memberLocationResList': instance.memberLocationResList,
-      'scoreRes': instance.scoreRes,
     };
 
 SocketMemberListModel _$SocketMemberListModelFromJson(
@@ -29,11 +26,12 @@ SocketMemberListModel _$SocketMemberListModelFromJson(
     SocketMemberListModel(
       memberSeq: (json['memberSeq'] as num).toInt(),
       nickname: json['nickname'] as String,
-      imageUrl: json['imageUrl'] as String?,
+      imageUrl: json['imageUrl'] as String,
       presentLat: (json['presentLat'] as num).toDouble(),
       presentLng: (json['presentLng'] as num).toDouble(),
       destinationDistance: (json['destinationDistance'] as num).toDouble(),
       rank: (json['rank'] as num?)?.toInt(),
+      isOpen: json['isOpen'] as bool,
     );
 
 Map<String, dynamic> _$SocketMemberListModelToJson(
@@ -45,19 +43,6 @@ Map<String, dynamic> _$SocketMemberListModelToJson(
       'presentLat': instance.presentLat,
       'presentLng': instance.presentLng,
       'destinationDistance': instance.destinationDistance,
+      'isOpen': instance.isOpen,
       'rank': instance.rank,
-    };
-
-SocketScoreModel _$SocketScoreModelFromJson(Map<String, dynamic> json) =>
-    SocketScoreModel(
-      goldMemberSeq: (json['goldMemberSeq'] as num?)?.toInt(),
-      silverMemberSeq: (json['silverMemberSeq'] as num?)?.toInt(),
-      bronzeMemberSeq: (json['bronzeMemberSeq'] as num?)?.toInt(),
-    );
-
-Map<String, dynamic> _$SocketScoreModelToJson(SocketScoreModel instance) =>
-    <String, dynamic>{
-      'goldMemberSeq': instance.goldMemberSeq,
-      'silverMemberSeq': instance.silverMemberSeq,
-      'bronzeMemberSeq': instance.bronzeMemberSeq,
     };

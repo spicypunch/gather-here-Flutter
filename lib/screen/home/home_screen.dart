@@ -463,7 +463,9 @@ class _SelectedLocationSheet extends ConsumerWidget {
               onTab: (dateTime, timeOfDay) async {
                 final result = await ref.read(homeProvider.notifier).tapStartSharingButton(dateTime, timeOfDay);
 
-                if (result != null) {
+                if (result == null) {
+                  Utils.showSnackBar(context, '방 생성에 실패했습니다. 다시 시도해주세요');
+                } else {
                   context.pop();
                   context.pop();
                   context.pushNamed(

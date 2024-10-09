@@ -31,6 +31,9 @@ SearchDocumentsModel _$SearchDocumentsModelFromJson(
       phone: json['phone'] as String?,
       x: json['x'] as String,
       y: json['y'] as String,
+      markerIcon: json['markerIcon'] == null
+          ? null
+          : BitmapDescriptor.fromJson(json['markerIcon'] as Object),
     );
 
 Map<String, dynamic> _$SearchDocumentsModelToJson(
@@ -45,4 +48,5 @@ Map<String, dynamic> _$SearchDocumentsModelToJson(
       'phone': instance.phone,
       'x': instance.x,
       'y': instance.y,
+      'markerIcon': instance.markerIcon,
     };

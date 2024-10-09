@@ -208,21 +208,12 @@ class _MapState extends ConsumerState<_Map> {
       onMapCreated: (controller) {
         _controller.complete(controller);
       },
-      markers: state.members
-          .map(
-            (result) => Marker(
-              markerId: MarkerId('${result.hashCode}'),
-              position: LatLng(result.presentLat, result.presentLng),
-            ),
-          )
-          .toSet()
-          .union(
-        {
-          Marker(
-              markerId: MarkerId('${state.roomModel?.destinationName}'),
-              position: LatLng(state.roomModel?.destinationLat ?? 0, state.roomModel?.destinationLng ?? 0))
-        },
-      ),
+      markers: state.markers.whereType<Marker>().toSet().union({
+        Marker(
+          markerId: MarkerId('${state.roomModel?.destinationName}'),
+          position: LatLng(state.roomModel?.destinationLat ?? 0, state.roomModel?.destinationLng ?? 0),
+        )
+      }),
     );
   }
 
@@ -316,14 +307,15 @@ class _BottomSheetState extends ConsumerState<_BottomSheet> {
     final state = ref.watch(shareProvider);
     return TextButton.icon(
       style: TextButton.styleFrom(
-          foregroundColor: AppColor.main,
-          padding: EdgeInsets.zero,
-          minimumSize: Size.zero,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          textStyle: TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 20,
-          )),
+        foregroundColor: AppColor.main,
+        padding: EdgeInsets.zero,
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        textStyle: TextStyle(
+          fontWeight: FontWeight.w700,
+          fontSize: 20,
+        ),
+      ),
       iconAlignment: IconAlignment.end,
       label: Text('${state.roomModel?.shareCode}'),
       icon: Icon(Icons.content_copy),

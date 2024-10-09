@@ -41,8 +41,7 @@ class HomeState {
   });
 }
 
-final homeProvider =
-    AutoDisposeStateNotifierProvider<HomeProvider, HomeState>((ref) {
+final homeProvider = AutoDisposeStateNotifierProvider<HomeProvider, HomeState>((ref) {
   final mapRepo = ref.watch(mapRepositoryProvider);
   final roomRepo = ref.watch(roomRepositoryProvider);
   final appInfoRepo = ref.watch(appInfoRepositoryProvider);
@@ -104,8 +103,7 @@ class HomeProvider extends StateNotifier<HomeState> {
     }
 
     try {
-      final result = await roomRepo.postJoinRoom(
-          body: RoomJoinModel(shareCode: state.inviteCode!));
+      final result = await roomRepo.postJoinRoom(body: RoomJoinModel(shareCode: state.inviteCode!));
       return result;
     } catch (err) {
       print('${err.toString()}');
@@ -122,41 +120,32 @@ class HomeProvider extends StateNotifier<HomeState> {
     }
   }
 
-  Future<RoomResponseModel?> tapStartSharingButton(
-      DateTime targetDate, TimeOfDay targetTime) async {
+  Future<RoomResponseModel?> tapStartSharingButton(DateTime targetDate, TimeOfDay targetTime) async {
     state.targetDate = targetDate;
     state.targetTime = targetTime;
-    final encounterDate = DateFormat('yyyy-MM-dd HH:mm').format(
-      DateTime(
-        targetDate.year,
-        targetDate.month,
-        targetDate.day,
-        targetTime.hour,
-        targetTime.minute,
-      ),
-    );
-    print(encounterDate);
 
-    if (state.targetDate != null &&
-        state.targetTime != null &&
-        state.selectedResult != null) {
-      try {
-        final result = await roomRepo.postCreateRoom(
-          body: RoomCreateModel(
-            destinationLat: double.parse(state.selectedResult!.y),
-            destinationLng: double.parse(state.selectedResult!.x),
-            destinationName: state.selectedResult?.place_name ?? "",
-            encounterDate: encounterDate,
-          ),
-        );
-        print(result.toString());
-        return result;
-      } catch (err) {
-        print(err.toString());
-      }
+    final encounterDate = DateFormat('yyyy-MM-dd HH:mm').format(
+      DateTime(targetDate.year, targetDate.month, targetDate.day, targetTime.hour, targetTime.minute),
+    );
+
+    if (state.targetDate == null || state.targetTime == null || state.selectedResult == null) {
+      return null;
     }
 
-    return null;
+    try {
+      final result = await roomRepo.postCreateRoom(
+        body: RoomCreateModel(
+          destinationLat: double.parse(state.selectedResult!.y),
+          destinationLng: double.parse(state.selectedResult!.x),
+          destinationName: state.selectedResult?.place_name ?? "",
+          encounterDate: encounterDate,
+        ),
+      );
+      return result;
+    } catch (err) {
+      debugPrint(err.toString());
+      return null;
+    }
   }
 
   void queryChanged({required String value}) async {
@@ -169,12 +158,8 @@ class HomeProvider extends StateNotifier<HomeState> {
     _setState();
 
     // 현재좌표와, 쿼리가 있다면 검색하기
-    if (state.query != null &&
-        state.query!.isNotEmpty &&
-        state.lat != null &&
-        state.lon != null) {
-      final result = await mapRepo.getSearchResults(
-          query: state.query!, x: state.lon!, y: state.lat!);
+    if (state.query != null && state.query!.isNotEmpty && state.lat != null && state.lon != null) {
+      final result = await mapRepo.getSearchResults(query: state.query!, x: state.lon!, y: state.lat!);
       state.results = result.documents ?? [];
       _setState();
     }
@@ -204,11 +189,10 @@ class HomeProvider extends StateNotifier<HomeState> {
     CustomMarker(label).paint(canvas, const Size(width, height));
 
     final ui.Image image = await pictureRecorder.endRecording().toImage(
-      width.toInt(),
-      height.toInt(),
-    );
-    final ByteData? byteData =
-    await image.toByteData(format: ui.ImageByteFormat.png);
+          width.toInt(),
+          height.toInt(),
+        );
+    final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
 
     return BitmapDescriptor.fromBytes(byteData!.buffer.asUint8List());
   }

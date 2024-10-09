@@ -1,10 +1,10 @@
-class SocketModel {
+class SocketRequestModel {
   final int type;
   final double presentLat;
   final double presentLng;
   final double destinationDistance;
 
-  SocketModel({
+  SocketRequestModel({
     required this.type,
     required this.presentLat,
     required this.presentLng,

@@ -2,17 +2,19 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gather_here/screen/share/Image_marker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:gather_here/common/location/location_manager.dart';
 import 'package:gather_here/common/model/request/room_exit_model.dart';
 import 'package:gather_here/common/model/response/room_response_model.dart';
-import 'package:gather_here/common/model/socket_model.dart';
+import 'package:gather_here/common/model/socket_request_model.dart';
 import 'package:gather_here/common/model/socket_response_model.dart';
 import 'package:gather_here/common/repository/room_repository.dart';
 import 'package:gather_here/common/router/router.dart';
 import 'package:gather_here/screen/share/socket_manager.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class ShareState {
   double? myLat; // 위도
@@ -20,9 +22,10 @@ class ShareState {
   double? distance; // 경도
   RoomResponseModel? roomModel;
   String? isHost;
-  int remainSeconds;
 
   List<SocketMemberListModel> members;
+  List<Marker?> markers;
+  int remainSeconds;
 
   ShareState({
     this.myLat,
@@ -31,6 +34,7 @@ class ShareState {
     this.roomModel,
     this.isHost,
     required this.members,
+    required this.markers,
     this.remainSeconds = 0,
   });
 }
@@ -62,7 +66,7 @@ class ShareProvider extends StateNotifier<ShareState> {
     required this.socketManager,
     required this.locationManager,
     required this.router,
-  }) : super(ShareState(members: [])) {}
+  }) : super(ShareState(members: [], markers: [])) {}
 
   void _setState() {
     state = ShareState(
@@ -72,6 +76,7 @@ class ShareProvider extends StateNotifier<ShareState> {
       distance: state.distance,
       roomModel: state.roomModel,
       members: state.members,
+      markers: state.markers,
       remainSeconds: state.remainSeconds,
     );
   }
@@ -110,13 +115,30 @@ class ShareProvider extends StateNotifier<ShareState> {
     }
 
     socketManager.observeConnection().listen(
-      (position) {
+      (position) async {
         print('callback: $position');
         Map<String, dynamic> resultMap = jsonDecode(position);
         final results = SocketResponseModel.fromJson(resultMap);
 
         state.members = results.memberLocationResList;
         state.members.sort((e1, e2) => e1.destinationDistance.compareTo(e2.destinationDistance));
+
+        final markers = await Future.wait(
+          results.memberLocationResList.map(
+            (result) async {
+              final marker = await ImageMarker.buildMarkerFromUrl(
+                id: result.memberSeq.toString(),
+                url: result.imageUrl == "" ? 'http://www.gravatar.com/avatar/?d=mp' : result.imageUrl,
+                position: LatLng(result.presentLat, result.presentLng),
+                width: 100,
+              );
+              return marker;
+            },
+          ),
+        );
+
+        state.markers = markers;
+        print('length: ${state.markers.length}');
 
         for (int i = 0; i < state.members.length; i++) {
           state.members[i].rank = i + 1;
@@ -150,7 +172,7 @@ class ShareProvider extends StateNotifier<ShareState> {
   // 소켓 통신
   void deliveryMyInfo(int type) {
     socketManager.deliveryMyInfo(
-      SocketModel(
+      SocketRequestModel(
           type: type, presentLat: state.myLat!, presentLng: state.myLong!, destinationDistance: state.distance!),
     );
   }
