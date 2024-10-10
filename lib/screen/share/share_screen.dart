@@ -1,7 +1,8 @@
 import 'dart:async';
 
-import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gather_here/common/components/default_alert_dialog.dart';
 import 'package:gather_here/common/const/colors.dart';
@@ -9,8 +10,9 @@ import 'package:gather_here/common/model/response/room_response_model.dart';
 import 'package:gather_here/common/model/socket_response_model.dart';
 import 'package:gather_here/common/utils/utils.dart';
 import 'package:gather_here/screen/share/share_provider.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+
+import '../../common/background/initialize_service.dart';
 
 class ShareScreen extends ConsumerStatefulWidget {
   static get name => 'share';
@@ -27,13 +29,14 @@ class ShareScreen extends ConsumerStatefulWidget {
   ConsumerState<ShareScreen> createState() => _ShareScreenState();
 }
 
-class _ShareScreenState extends ConsumerState<ShareScreen> {
+class _ShareScreenState extends ConsumerState<ShareScreen>
+    with WidgetsBindingObserver {
   late final Timer _timer;
 
   @override
   void initState() {
     super.initState();
-
+    WidgetsBinding.instance.addObserver(this);
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       ref.read(shareProvider.notifier).timeTick();
     });
@@ -42,7 +45,25 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
   @override
   void dispose() {
     _timer.cancel();
+    WidgetsBinding.instance.addObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
+    if (!mounted) return;
+    final service = FlutterBackgroundService();
+    final isRunning = await service.isRunning();
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      if (!isRunning) {
+        startBackgroundService();
+      }
+    } else if (state == AppLifecycleState.resumed) {
+      if (isRunning) {
+        stopBackgroundService();
+      }
+    }
   }
 
   @override
@@ -70,7 +91,9 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
                             title: '위치공유를 중단할까요?',
                             content: '다시 방에 참여하기 위해선\n코드를 다시 입력해야합니다',
                             onTabConfirm: () {
-                              ref.read(shareProvider.notifier).disconnectSocket();
+                              ref
+                                  .read(shareProvider.notifier)
+                                  .disconnectSocket();
                             },
                           );
                         },
@@ -83,14 +106,14 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
                     ),
                     icon: Container(
                       height: 50,
-                      padding: EdgeInsets.all(10.0),
-                      child: Icon(
-                        Icons.exit_to_app,
-                        size: 30,
-                      ),
-                      decoration: BoxDecoration(
+                      padding: const EdgeInsets.all(10.0),
+                      decoration: const BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.exit_to_app,
+                        size: 30,
                       ),
                     ),
                   ),
@@ -103,20 +126,23 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
                 child: Container(
                   height: 50,
                   padding: const EdgeInsets.all(10),
-                  child: IntrinsicWidth(
-                    child: Row(children: [
-                      Icon(Icons.timelapse_outlined, color: AppColor.main),
-                      const SizedBox(width: 10),
-                      Text(
-                        '${Utils.convertToDateFormat(state.remainSeconds)} 남음',
-                        style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.w500, fontFeatures: [FontFeature.tabularFigures()]),
-                      ),
-                    ]),
-                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(25),
+                  ),
+                  child: IntrinsicWidth(
+                    child: Row(children: [
+                      const Icon(Icons.timelapse_outlined,
+                          color: AppColor.main),
+                      const SizedBox(width: 10),
+                      Text(
+                        '${Utils.convertToDateFormat(state.remainSeconds)} 남음',
+                        style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w500,
+                            fontFeatures: [FontFeature.tabularFigures()]),
+                      ),
+                    ]),
                   ),
                 ),
               ),
@@ -143,7 +169,8 @@ class _Map extends ConsumerStatefulWidget {
 }
 
 class _MapState extends ConsumerState<_Map> {
-  final Completer<GoogleMapController> _controller = Completer<GoogleMapController>();
+  final Completer<GoogleMapController> _controller =
+      Completer<GoogleMapController>();
 
   static const CameraPosition _defaultPosition = CameraPosition(
     target: LatLng(37.5642135, 127.0016985),
@@ -157,7 +184,9 @@ class _MapState extends ConsumerState<_Map> {
   }
 
   void _setup() async {
-    await ref.read(shareProvider.notifier).setInitState(widget.isHost, widget.roomModel);
+    await ref
+        .read(shareProvider.notifier)
+        .setInitState(widget.isHost, widget.roomModel);
     await ref.read(shareProvider.notifier).connectSocket();
     ref.read(shareProvider.notifier).observeMyLocation((lat, lon) {
       moveToTargetPosition(lat: lat, lon: lon);
@@ -168,7 +197,8 @@ class _MapState extends ConsumerState<_Map> {
   void moveToTargetPosition({required double lat, required double lon}) async {
     final GoogleMapController controller = await _controller.future;
     final targetPosition = CameraPosition(target: LatLng(lat, lon), zoom: 14);
-    await controller.animateCamera(CameraUpdate.newCameraPosition(targetPosition));
+    await controller
+        .animateCamera(CameraUpdate.newCameraPosition(targetPosition));
   }
 
   @override
@@ -196,7 +226,8 @@ class _MapState extends ConsumerState<_Map> {
             {
               Marker(
                   markerId: MarkerId('${state.roomModel?.destinationName}'),
-                  position: LatLng(state.roomModel?.destinationLat ?? 0, state.roomModel?.destinationLng ?? 0))
+                  position: LatLng(state.roomModel?.destinationLat ?? 0,
+                      state.roomModel?.destinationLng ?? 0))
             },
           ),
         ),
@@ -208,7 +239,7 @@ class _MapState extends ConsumerState<_Map> {
                 moveToTargetPosition(lat: state.myLat!, lon: state.myLong!);
               }
             },
-            icon: Icon(Icons.my_location),
+            icon: const Icon(Icons.my_location),
           ),
         )
       ],
@@ -235,14 +266,14 @@ class _BottomSheetState extends ConsumerState<_BottomSheet> {
       builder: (BuildContext context, scrollController) {
         return Container(
           clipBehavior: Clip.hardEdge,
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(25),
               topRight: Radius.circular(25),
             ),
           ),
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           child: CustomScrollView(
             controller: scrollController,
             slivers: [
@@ -255,34 +286,42 @@ class _BottomSheetState extends ConsumerState<_BottomSheet> {
                       children: [
                         if (state.roomModel?.encounterDate != null)
                           Text(
-                            Utils.makeMeetingHeaderLabel(DateTime.parse(state.roomModel!.encounterDate!)),
-                            style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20, height: 1),
+                            Utils.makeMeetingHeaderLabel(DateTime.parse(
+                                state.roomModel!.encounterDate!)),
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 20,
+                                height: 1),
                             maxLines: 2,
                           ),
                         const SizedBox(height: 5),
                         Text(
                           '${state.roomModel?.destinationName}',
-                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 24, height: 1),
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 24,
+                              height: 1),
                         ),
                       ],
                     ),
-                    Spacer(),
+                    const Spacer(),
                     TextButton.icon(
                       style: TextButton.styleFrom(
                           foregroundColor: AppColor.blue,
                           padding: EdgeInsets.zero,
                           minimumSize: Size.zero,
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          textStyle: TextStyle(
+                          textStyle: const TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 20,
                           )),
                       iconAlignment: IconAlignment.end,
                       label: Text('${state.roomModel?.shareCode}'),
-                      icon: Icon(Icons.content_copy),
+                      icon: const Icon(Icons.content_copy),
                       onPressed: () {
                         if (state.roomModel?.shareCode != null) {
-                          Clipboard.setData(ClipboardData(text: state.roomModel!.shareCode!));
+                          Clipboard.setData(
+                              ClipboardData(text: state.roomModel!.shareCode!));
                         }
                       },
                     ),
@@ -290,7 +329,9 @@ class _BottomSheetState extends ConsumerState<_BottomSheet> {
                 ),
               ),
               SliverList.list(
-                children: state.members.map((member) => _MemberRow(member: member)).toList(),
+                children: state.members
+                    .map((member) => _MemberRow(member: member))
+                    .toList(),
               )
             ],
           ),
@@ -316,7 +357,8 @@ class _MemberRow extends StatelessWidget {
         children: [
           if (member.imageUrl != "")
             ClipOval(
-              child: Image.network(member.imageUrl ?? '', width: 60, height: 60, fit: BoxFit.cover),
+              child: Image.network(member.imageUrl ?? '',
+                  width: 60, height: 60, fit: BoxFit.cover),
             ),
           if (member.imageUrl == "")
             const Icon(
@@ -328,16 +370,20 @@ class _MemberRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '${member.nickname}',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                member.nickname,
+                style:
+                    const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
               ),
               Text(
                 '${member.destinationDistance}m 남음',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: AppColor.grey1),
+                style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    color: AppColor.grey1),
               ),
             ],
           ),
-          Spacer(),
+          const Spacer(),
           if (member.rank != null)
             Image.asset(
               'asset/img/crown.png',
