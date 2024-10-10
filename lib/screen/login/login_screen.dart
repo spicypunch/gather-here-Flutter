@@ -151,20 +151,11 @@ class _BottomContainer extends StatelessWidget {
           ],
         ),
         SizedBox(height: 80),
-        Text(
-          '비밀번호를 잊으셨나요?',
-          style: TextStyle(
-            fontSize: 16,
-            color: AppColor.grey1,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              '계정이 없으신가요?',
+              '아직 계정이 없으신가요?',
               style: TextStyle(
                 fontSize: 16,
                 color: AppColor.grey1,
@@ -179,7 +170,7 @@ class _BottomContainer extends StatelessWidget {
                 '가입하기',
                 style: TextStyle(
                   fontSize: 16,
-                  color: AppColor.blue,
+                  color: AppColor.main,
                   fontWeight: FontWeight.w700,
                 ),
               ),

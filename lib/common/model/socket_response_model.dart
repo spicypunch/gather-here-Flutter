@@ -8,12 +8,10 @@ part 'socket_response_model.g.dart';
 class SocketResponseModel {
   final int roomSeq;
   final List<SocketMemberListModel> memberLocationResList;
-  final SocketScoreModel scoreRes;
 
   SocketResponseModel({
     required this.roomSeq,
     required this.memberLocationResList,
-    required this.scoreRes,
   });
 
   factory SocketResponseModel.fromJson(Map<String, dynamic> json)
@@ -26,10 +24,11 @@ class SocketResponseModel {
 class SocketMemberListModel {
   final int memberSeq;
   final String nickname;
-  final String? imageUrl;
+  final String imageUrl;
   final double presentLat;
   final double presentLng;
   final double destinationDistance;
+  final bool isOpen;
   int? rank;
 
   Color get color {
@@ -44,33 +43,16 @@ class SocketMemberListModel {
   SocketMemberListModel({
     required this.memberSeq,
     required this.nickname,
-    this.imageUrl,
+    required this.imageUrl,
     required this.presentLat,
     required this.presentLng,
     required this.destinationDistance,
     this.rank,
+    required this.isOpen,
   });
 
   factory SocketMemberListModel.fromJson(Map<String, dynamic> json)
   => _$SocketMemberListModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$SocketMemberListModelToJson(this);
-}
-
-@JsonSerializable()
-class SocketScoreModel {
-  final int? goldMemberSeq;
-  final int? silverMemberSeq;
-  final int? bronzeMemberSeq;
-
-  SocketScoreModel({
-    this.goldMemberSeq,
-    this.silverMemberSeq,
-    this.bronzeMemberSeq,
-  });
-
-  factory SocketScoreModel.fromJson(Map<String, dynamic> json)
-  => _$SocketScoreModelFromJson(json);
-
-  Map<String, dynamic> toJson() => _$SocketScoreModelToJson(this);
 }

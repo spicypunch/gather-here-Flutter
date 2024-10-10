@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:gather_here/common/const/const.dart';
-import 'package:gather_here/common/model/socket_model.dart';
+import 'package:gather_here/common/model/socket_request_model.dart';
 import 'package:gather_here/common/storage/storage.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -51,7 +51,7 @@ class SocketManager {
     return _channel.stream;
   }
 
-  void deliveryMyInfo(SocketModel model) {
+  void deliveryMyInfo(SocketRequestModel model) {
     final jsonString = jsonEncode(model.toJson());
     _channel.sink.add(jsonString);
 

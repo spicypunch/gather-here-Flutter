@@ -77,77 +77,88 @@ class _ShareScreenState extends ConsumerState<ShareScreen>
           children: [
             _Map(isHost: widget.isHost, roomModel: widget.roomModel),
             _BottomSheet(),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: SafeArea(
-                child: Align(
-                  alignment: Alignment.topRight,
-                  child: IconButton(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (builder) {
-                          return DefaultAlertDialog(
-                            title: '위치공유를 중단할까요?',
-                            content: '다시 방에 참여하기 위해선\n코드를 다시 입력해야합니다',
-                            onTabConfirm: () {
-                              ref
-                                  .read(shareProvider.notifier)
-                                  .disconnectSocket();
-                            },
-                          );
-                        },
-                      );
-                    },
-                    style: IconButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    icon: Container(
-                      height: 50,
-                      padding: const EdgeInsets.all(10.0),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.exit_to_app,
-                        size: 30,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            SafeArea(
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: Container(
-                  height: 50,
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  child: IntrinsicWidth(
-                    child: Row(children: [
-                      const Icon(Icons.timelapse_outlined,
-                          color: AppColor.main),
-                      const SizedBox(width: 10),
-                      Text(
-                        '${Utils.convertToDateFormat(state.remainSeconds)} 남음',
-                        style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w500,
-                            fontFeatures: [FontFeature.tabularFigures()]),
-                      ),
-                    ]),
-                  ),
-                ),
-              ),
-            ),
+            _backButton(),
+            _timerHeader(),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _backButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: SafeArea(
+        child: Align(
+          alignment: Alignment.topLeft,
+          child: IconButton(
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (builder) {
+                  return DefaultAlertDialog(
+                    title: '위치공유를 중단할까요?',
+                    content: '다시 방에 참여하기 위해선\n코드를 다시 입력해야합니다',
+                    onTabConfirm: () {
+                      ref.read(shareProvider.notifier).disconnectSocket();
+                    },
+                  );
+                },
+              );
+            },
+            style: IconButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            icon: Container(
+              height: 50,
+              padding: EdgeInsets.all(10.0),
+              child: Icon(
+                Icons.exit_to_app,
+                size: 30,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _timerHeader() {
+    final state = ref.watch(shareProvider);
+
+    return SafeArea(
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: Container(
+          height: 50,
+          padding: const EdgeInsets.all(10),
+          child: IntrinsicWidth(
+            child: Row(
+              children: [
+                Icon(Icons.timelapse_outlined, color: AppColor.black1),
+                const SizedBox(width: 10),
+                Text(
+                  '${Utils.convertToDateFormat(state.remainSeconds)} 남음',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                    fontFeatures: [FontFeature.tabularFigures()],
+                    color: state.remainSeconds <= 60 ? AppColor.red : AppColor.black1,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(25),
+          ),
         ),
       ),
     );
@@ -189,16 +200,17 @@ class _MapState extends ConsumerState<_Map> {
         .setInitState(widget.isHost, widget.roomModel);
     await ref.read(shareProvider.notifier).connectSocket();
     ref.read(shareProvider.notifier).observeMyLocation((lat, lon) {
-      moveToTargetPosition(lat: lat, lon: lon);
+      _moveToTargetPosition(lat: lat, lon: lon);
     });
   }
 
-  // 특정 위치로 카메라 포지션 이동
-  void moveToTargetPosition({required double lat, required double lon}) async {
-    final GoogleMapController controller = await _controller.future;
-    final targetPosition = CameraPosition(target: LatLng(lat, lon), zoom: 14);
-    await controller
-        .animateCamera(CameraUpdate.newCameraPosition(targetPosition));
+  // 특정 위치로 카메라 포지션 이동 (TrackingMode가 On일때만)
+  void _moveToTargetPosition({required double lat, required double lon}) async {
+    if (ref.read(shareProvider).isTracking) {
+      final GoogleMapController controller = await _controller.future;
+      final targetPosition = CameraPosition(target: LatLng(lat, lon), zoom: 14);
+      await controller.animateCamera(CameraUpdate.newCameraPosition(targetPosition));
+    }
   }
 
   @override
@@ -207,42 +219,64 @@ class _MapState extends ConsumerState<_Map> {
 
     return Stack(
       children: [
-        GoogleMap(
-          initialCameraPosition: _defaultPosition,
-          myLocationEnabled: true,
-          myLocationButtonEnabled: false,
-          onMapCreated: (controller) {
-            _controller.complete(controller);
-          },
-          markers: state.members
-              .map(
-                (result) => Marker(
-                  markerId: MarkerId('${result.hashCode}'),
-                  position: LatLng(result.presentLat, result.presentLng),
-                ),
-              )
-              .toSet()
-              .union(
-            {
-              Marker(
-                  markerId: MarkerId('${state.roomModel?.destinationName}'),
-                  position: LatLng(state.roomModel?.destinationLat ?? 0,
-                      state.roomModel?.destinationLng ?? 0))
-            },
-          ),
-        ),
-        Align(
-          alignment: Alignment.bottomLeft,
+        _googleMap(),
+        _myLocationButton(),
+      ],
+    );
+  }
+
+  Widget _googleMap() {
+    final state = ref.watch(shareProvider);
+
+    return GoogleMap(
+      initialCameraPosition: _defaultPosition,
+      myLocationEnabled: true,
+      myLocationButtonEnabled: false,
+      onMapCreated: (controller) {
+        _controller.complete(controller);
+      },
+      markers: state.markers.whereType<Marker>().toSet().union({
+        Marker(
+          markerId: MarkerId('${state.roomModel?.destinationName}'),
+          position: LatLng(state.roomModel?.destinationLat ?? 0, state.roomModel?.destinationLng ?? 0),
+        )
+      }),
+    );
+  }
+
+  Widget _myLocationButton() {
+    final state = ref.watch(shareProvider);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: SafeArea(
+        child: Align(
+          alignment: Alignment.topRight,
           child: IconButton(
             onPressed: () {
+              Utils.showSnackBar(context, '내 위치 추적모드 ${state.isTracking ? 'off' : 'on'}');
+              ref.read(shareProvider.notifier).toggleTrackingButton();
               if (state.myLat != null && state.myLong != null) {
-                moveToTargetPosition(lat: state.myLat!, lon: state.myLong!);
+                _moveToTargetPosition(lat: state.myLat!, lon: state.myLong!);
               }
             },
-            icon: const Icon(Icons.my_location),
+            style: IconButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            icon: Container(
+              height: 50,
+              padding: EdgeInsets.all(10.0),
+              child: Icon(Icons.my_location, size: 30, color: state.isTracking ? AppColor.main : AppColor.black1),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+            ),
           ),
-        )
-      ],
+        ),
+      ),
     );
   }
 }
@@ -277,57 +311,7 @@ class _BottomSheetState extends ConsumerState<_BottomSheet> {
           child: CustomScrollView(
             controller: scrollController,
             slivers: [
-              SliverToBoxAdapter(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (state.roomModel?.encounterDate != null)
-                          Text(
-                            Utils.makeMeetingHeaderLabel(DateTime.parse(
-                                state.roomModel!.encounterDate!)),
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 20,
-                                height: 1),
-                            maxLines: 2,
-                          ),
-                        const SizedBox(height: 5),
-                        Text(
-                          '${state.roomModel?.destinationName}',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 24,
-                              height: 1),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    TextButton.icon(
-                      style: TextButton.styleFrom(
-                          foregroundColor: AppColor.blue,
-                          padding: EdgeInsets.zero,
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          textStyle: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 20,
-                          )),
-                      iconAlignment: IconAlignment.end,
-                      label: Text('${state.roomModel?.shareCode}'),
-                      icon: const Icon(Icons.content_copy),
-                      onPressed: () {
-                        if (state.roomModel?.shareCode != null) {
-                          Clipboard.setData(
-                              ClipboardData(text: state.roomModel!.shareCode!));
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ),
+              SliverToBoxAdapter(child: _destinationHeader()),
               SliverList.list(
                 children: state.members
                     .map((member) => _MemberRow(member: member))
@@ -336,6 +320,56 @@ class _BottomSheetState extends ConsumerState<_BottomSheet> {
             ],
           ),
         );
+      },
+    );
+  }
+
+  Widget _destinationHeader() {
+    final state = ref.watch(shareProvider);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (state.roomModel?.encounterDate != null)
+          Row(
+            children: [
+              Text(
+                Utils.makeMeetingHeaderLabel(DateTime.parse(state.roomModel!.encounterDate!)),
+                style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20, height: 1),
+                maxLines: 2,
+              ),
+              Spacer(),
+              _copyButton(),
+            ],
+          ),
+        const SizedBox(height: 5),
+        Text(
+          '${state.roomModel?.destinationName}',
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 24, height: 1),
+        ),
+      ],
+    );
+  }
+
+  Widget _copyButton() {
+    final state = ref.watch(shareProvider);
+    return TextButton.icon(
+      style: TextButton.styleFrom(
+        foregroundColor: AppColor.main,
+        padding: EdgeInsets.zero,
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        textStyle: TextStyle(
+          fontWeight: FontWeight.w700,
+          fontSize: 20,
+        ),
+      ),
+      iconAlignment: IconAlignment.end,
+      label: Text('${state.roomModel?.shareCode}'),
+      icon: Icon(Icons.content_copy),
+      onPressed: () {
+        if (state.roomModel?.shareCode != null) {
+          Clipboard.setData(ClipboardData(text: state.roomModel!.shareCode!));
+        }
       },
     );
   }

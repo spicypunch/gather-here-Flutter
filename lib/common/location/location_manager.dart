@@ -53,6 +53,6 @@ class LocationManager {
       myLongitude,
       targetLatitude,
       targetLongitude,
-    );
+    ).ceilToDouble();
   }
 }
