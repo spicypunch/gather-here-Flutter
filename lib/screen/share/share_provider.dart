@@ -19,7 +19,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 class ShareState {
   double? myLat; // 위도
   double? myLong; // 경도
-  double? distance; // 경도
+  double? distance; // 거리
   RoomResponseModel? roomModel;
   String? isHost;
 

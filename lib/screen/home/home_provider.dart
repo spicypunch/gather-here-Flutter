@@ -89,7 +89,12 @@ class HomeProvider extends StateNotifier<HomeState> {
 
   // 홈화면 들어왔을때 room 정보조회
   Future<RoomResponseModel> getRoomInfo() async {
-    return await roomRepo.getRoom();
+    final result = await roomRepo.getRoom();
+    saveDestinationLatLng(
+      result.destinationLat ?? 0.0,
+      result.destinationLng ?? 0.0,
+    );
+    return result;
   }
 
   void inviteCodeChanged({required String value}) {
@@ -104,6 +109,10 @@ class HomeProvider extends StateNotifier<HomeState> {
 
     try {
       final result = await roomRepo.postJoinRoom(body: RoomJoinModel(shareCode: state.inviteCode!));
+      saveDestinationLatLng(
+        result.destinationLat ?? 0.0,
+        result.destinationLng ?? 0.0,
+      );
       return result;
     } catch (err) {
       print('${err.toString()}');
@@ -131,21 +140,25 @@ class HomeProvider extends StateNotifier<HomeState> {
     if (state.targetDate == null || state.targetTime == null || state.selectedResult == null) {
       return null;
     }
-
+    
     try {
       final result = await roomRepo.postCreateRoom(
-        body: RoomCreateModel(
-          destinationLat: double.parse(state.selectedResult!.y),
-          destinationLng: double.parse(state.selectedResult!.x),
-          destinationName: state.selectedResult?.place_name ?? "",
-          encounterDate: encounterDate,
-        ),
-      );
-      return result;
-    } catch (err) {
-      debugPrint(err.toString());
-      return null;
-    }
+          body: RoomCreateModel(
+            destinationLat: double.parse(state.selectedResult!.y),
+            destinationLng: double.parse(state.selectedResult!.x),
+            destinationName: state.selectedResult?.place_name ?? "",
+            encounterDate: encounterDate,
+          ),
+        );
+        saveDestinationLatLng(
+          double.parse(state.selectedResult!.y),
+          double.parse(state.selectedResult!.x),
+        );
+        print(result.toString());
+        return result;
+      } catch (err) {
+        print(err.toString());
+      }
   }
 
   void queryChanged({required String value}) async {
@@ -192,8 +205,20 @@ class HomeProvider extends StateNotifier<HomeState> {
           width.toInt(),
           height.toInt(),
         );
+
     final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
 
     return BitmapDescriptor.fromBytes(byteData!.buffer.asUint8List());
+  }
+
+  void saveDestinationLatLng(double destinationLat, double destinationLng) {
+    storage.write(
+      key: StorageKey.destinationLat.name,
+      value: destinationLat.toString(),
+    );
+    storage.write(
+      key: StorageKey.destinationLng.name,
+      value: destinationLng.toString(),
+    );
   }
 }

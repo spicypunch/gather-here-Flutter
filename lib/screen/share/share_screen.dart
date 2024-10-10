@@ -1,7 +1,8 @@
 import 'dart:async';
 
-import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gather_here/common/components/default_alert_dialog.dart';
 import 'package:gather_here/common/const/colors.dart';
@@ -10,6 +11,8 @@ import 'package:gather_here/common/model/socket_response_model.dart';
 import 'package:gather_here/common/utils/utils.dart';
 import 'package:gather_here/screen/share/share_provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+
+import '../../common/background/initialize_service.dart';
 
 class ShareScreen extends ConsumerStatefulWidget {
   static get name => 'share';
@@ -26,13 +29,14 @@ class ShareScreen extends ConsumerStatefulWidget {
   ConsumerState<ShareScreen> createState() => _ShareScreenState();
 }
 
-class _ShareScreenState extends ConsumerState<ShareScreen> {
+class _ShareScreenState extends ConsumerState<ShareScreen>
+    with WidgetsBindingObserver {
   late final Timer _timer;
 
   @override
   void initState() {
     super.initState();
-
+    WidgetsBinding.instance.addObserver(this);
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       ref.read(shareProvider.notifier).timeTick();
     });
@@ -41,7 +45,25 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
   @override
   void dispose() {
     _timer.cancel();
+    WidgetsBinding.instance.addObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
+    if (!mounted) return;
+    final service = FlutterBackgroundService();
+    final isRunning = await service.isRunning();
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      if (!isRunning) {
+        startBackgroundService();
+      }
+    } else if (state == AppLifecycleState.resumed) {
+      if (isRunning) {
+        stopBackgroundService();
+      }
+    }
   }
 
   @override
@@ -158,7 +180,8 @@ class _Map extends ConsumerStatefulWidget {
 }
 
 class _MapState extends ConsumerState<_Map> {
-  final Completer<GoogleMapController> _controller = Completer<GoogleMapController>();
+  final Completer<GoogleMapController> _controller =
+      Completer<GoogleMapController>();
 
   static const CameraPosition _defaultPosition = CameraPosition(
     target: LatLng(37.5642135, 127.0016985),
@@ -172,7 +195,9 @@ class _MapState extends ConsumerState<_Map> {
   }
 
   void _setup() async {
-    await ref.read(shareProvider.notifier).setInitState(widget.isHost, widget.roomModel);
+    await ref
+        .read(shareProvider.notifier)
+        .setInitState(widget.isHost, widget.roomModel);
     await ref.read(shareProvider.notifier).connectSocket();
     ref.read(shareProvider.notifier).observeMyLocation((lat, lon) {
       _moveToTargetPosition(lat: lat, lon: lon);
@@ -275,22 +300,22 @@ class _BottomSheetState extends ConsumerState<_BottomSheet> {
       builder: (BuildContext context, scrollController) {
         return Container(
           clipBehavior: Clip.hardEdge,
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(25),
               topRight: Radius.circular(25),
             ),
           ),
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           child: CustomScrollView(
             controller: scrollController,
             slivers: [
-              SliverToBoxAdapter(
-                child: _destinationHeader(),
-              ),
+              SliverToBoxAdapter(child: _destinationHeader()),
               SliverList.list(
-                children: state.members.map((member) => _MemberRow(member: member)).toList(),
+                children: state.members
+                    .map((member) => _MemberRow(member: member))
+                    .toList(),
               )
             ],
           ),
@@ -366,7 +391,8 @@ class _MemberRow extends StatelessWidget {
         children: [
           if (member.imageUrl != "")
             ClipOval(
-              child: Image.network(member.imageUrl ?? '', width: 60, height: 60, fit: BoxFit.cover),
+              child: Image.network(member.imageUrl ?? '',
+                  width: 60, height: 60, fit: BoxFit.cover),
             ),
           if (member.imageUrl == "")
             const Icon(
@@ -378,16 +404,20 @@ class _MemberRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '${member.nickname}',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                member.nickname,
+                style:
+                    const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
               ),
               Text(
                 '${member.destinationDistance}m 남음',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: AppColor.grey1),
+                style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    color: AppColor.grey1),
               ),
             ],
           ),
-          Spacer(),
+          const Spacer(),
           if (member.rank != null)
             Image.asset(
               'asset/img/crown.png',
