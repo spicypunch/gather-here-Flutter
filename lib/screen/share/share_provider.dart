@@ -96,7 +96,7 @@ class ShareProvider extends StateNotifier<ShareState> {
     final parsedDate = DateTime.parse(roomModel.encounterDate!);
     final difference = parsedDate.difference(DateTime.now());
 
-    state.remainSeconds = difference.inSeconds;
+    state.remainSeconds = difference.inSeconds >= 0 ? difference.inSeconds : 0;
     _setState();
   }
 

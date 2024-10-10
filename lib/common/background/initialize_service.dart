@@ -6,7 +6,7 @@ import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:gather_here/common/location/location_manager.dart';
-import 'package:gather_here/common/model/socket_model.dart';
+import 'package:gather_here/common/model/socket_request_model.dart';
 import 'package:gather_here/common/storage/storage.dart';
 import 'package:gather_here/screen/share/socket_manager.dart';
 
@@ -141,7 +141,7 @@ void onStart(ServiceInstance service) async {
     );
     debugPrint('Background service running: latitude ${position.latitude}, longitude ${position.longitude}, distance $distance');
     socketManager.deliveryMyInfo(
-      SocketModel(
+      SocketRequestModel(
         type: 2,
         presentLat: position.latitude,
         presentLng: position.longitude,
