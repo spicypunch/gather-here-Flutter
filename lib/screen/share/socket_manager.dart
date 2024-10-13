@@ -10,8 +10,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 final socketManagerProvider = Provider((ref) {
   final storage = ref.watch(storageProvider);
-  final socketManager = SocketManager();
-  socketManager.initialize(storage);
+  final socketManager = SocketManager(storage);
   return socketManager;
 });
 
@@ -20,7 +19,8 @@ class SocketManager {
   late WebSocketChannel _channel;
   late FlutterSecureStorage storage;
 
-  factory SocketManager() {
+  factory SocketManager(FlutterSecureStorage storage) {
+    _instance.storage = storage;
     return _instance;
   }
 

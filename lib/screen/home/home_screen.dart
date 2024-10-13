@@ -121,17 +121,24 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
 
   @override
   Widget build(BuildContext context) {
-    return SearchBar(
-      backgroundColor: const WidgetStatePropertyAll(AppColor.white),
-      hintText: "목적지 검색",
-      leading: _leadingIcon(),
-      trailing: [_trailingIcon()],
-      onChanged: (text) => EasyDebounce.debounce(
-        'query',
-        const Duration(seconds: 1),
-        () async {
-          ref.read(homeProvider.notifier).queryChanged(value: text);
-        },
+    return Theme(
+      data: Theme.of(context).copyWith(
+        textSelectionTheme: const TextSelectionThemeData(
+          cursorColor: AppColor.black1,
+        ),
+      ),
+      child: SearchBar(
+        backgroundColor: const WidgetStatePropertyAll(AppColor.white),
+        hintText: "목적지 검색",
+        leading: _leadingIcon(),
+        trailing: [_trailingIcon()],
+        onChanged: (text) => EasyDebounce.debounce(
+          'query',
+          const Duration(seconds: 1),
+              () async {
+            ref.read(homeProvider.notifier).queryChanged(value: text);
+          },
+        ),
       ),
     );
   }
@@ -281,6 +288,7 @@ class _MapState extends ConsumerState<_Map> {
       initialCameraPosition: _defaultPosition,
       myLocationEnabled: true,
       myLocationButtonEnabled: false,
+      zoomControlsEnabled: false,
       markers: state.results.map(
         (result) {
           final isSelected = result == state.selectedResult;

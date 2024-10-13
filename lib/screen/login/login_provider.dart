@@ -1,7 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'package:gather_here/common/model/request/login_model.dart';
 import 'package:gather_here/common/repository/auth_repository.dart';
+
+import '../../common/storage/storage.dart';
 
 // State
 class LoginState {
@@ -22,14 +25,16 @@ class LoginState {
 
 final loginProvider = AutoDisposeStateNotifierProvider<LoginProvider, LoginState>((ref) {
   final repo = ref.watch(authRepositoryProvider);
-  return LoginProvider(authRepo: repo);
+  final storage = ref.watch(storageProvider);
+  return LoginProvider(authRepo: repo, storage: storage);
 });
 
 class LoginProvider extends StateNotifier<LoginState> {
   final AuthRepository authRepo;
-
+  final FlutterSecureStorage storage;
   LoginProvider({
     required this.authRepo,
+    required this.storage,
   }) : super(LoginState());
 
   void _setState() {
@@ -49,6 +54,7 @@ class LoginProvider extends StateNotifier<LoginState> {
   Future<bool> postLogin() async {
     try {
       await authRepo.postLogin(body: LoginModel(identity: state.id, password: state.pw));
+      storage.write(key: StorageKey.passWd.name, value: state.pw);
       return true;
     } catch(err) {
       return false;

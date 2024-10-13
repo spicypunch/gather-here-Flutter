@@ -230,7 +230,7 @@ class _MapState extends ConsumerState<_Map> {
 
     return GoogleMap(
       initialCameraPosition: _defaultPosition,
-      myLocationEnabled: true,
+      myLocationEnabled: false,
       myLocationButtonEnabled: false,
       onMapCreated: (controller) {
         _controller.complete(controller);
@@ -239,6 +239,7 @@ class _MapState extends ConsumerState<_Map> {
         Marker(
           markerId: MarkerId('${state.roomModel?.destinationName}'),
           position: LatLng(state.roomModel?.destinationLat ?? 0, state.roomModel?.destinationLng ?? 0),
+          infoWindow: InfoWindow(title: '${state.roomModel?.destinationName}'),
         )
       }),
     );

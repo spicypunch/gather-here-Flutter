@@ -1,24 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gather_here/common/provider/provider_observer.dart';
 import 'package:gather_here/common/router/router.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:gather_here/common/utils/utils.dart';
 
 import 'common/background/initialize_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await requestPermissions();
+  await Utils.requestPermissions();
   await initializeService();
   runApp(
     ProviderScope(observers: [Logger()], child: _App()),
   );
-}
-
-Future<void> requestPermissions() async {
-  await Permission.notification.request();
 }
 
 class _App extends ConsumerWidget {
