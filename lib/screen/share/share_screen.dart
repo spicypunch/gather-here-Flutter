@@ -232,6 +232,7 @@ class _MapState extends ConsumerState<_Map> {
       initialCameraPosition: _defaultPosition,
       myLocationEnabled: false,
       myLocationButtonEnabled: false,
+      zoomControlsEnabled: false,
       onMapCreated: (controller) {
         _controller.complete(controller);
       },
