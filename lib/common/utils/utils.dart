@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class Utils {
   Utils._();
@@ -41,5 +42,9 @@ class Utils {
     } else {
       return '내일 $hour시 $minute분 까지';
     }
+  }
+
+  static Future<void> requestPermissions() async {
+    await Permission.notification.request();
   }
 }

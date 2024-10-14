@@ -48,7 +48,7 @@ class _ProfileWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final memberInfoState = ref.watch(memberInfoProvider);
     ref.listen<MyPageState>(myPageProvider, (previous, current) {
-      if(current.changeNickName == 0 || current.changePassWord == 0) {
+      if (current.changeNickName == 0 || current.changePassWord == 0) {
         ref.read(memberInfoProvider.notifier).getMyInfo();
       }
       _handleStateChanges(context, current);
@@ -170,8 +170,7 @@ class _MenuContainerWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final appVersion = ref.watch(appVersionProvider);
-    final myPageState = ref.watch(myPageProvider);
+    final storageKeysState = ref.watch(storageKeyProvider);
     return Container(
       decoration: BoxDecoration(
         color: AppColor.white,
@@ -191,15 +190,31 @@ class _MenuContainerWidget extends ConsumerWidget {
                       '새 비밀번호 입력',
                       '새 비밀번호 확인',
                     ],
+                    hideText: true,
                     onChanged: (textList) async {
                       final currentPw = textList[0];
                       final changePw = textList[1];
                       final changePwConfirm = textList[2];
-                      if (currentPw.isNotEmpty &&
-                          (changePw == changePwConfirm)) {
+
+                      if (currentPw.isEmpty ||
+                          changePw.isEmpty ||
+                          changePwConfirm.isEmpty) {
+                        Utils.showSnackBar(context, '빈칸을 채워주세요');
+                      } else if (changePw.length < 4 ||
+                          changePwConfirm.length < 4) {
+                        Utils.showSnackBar(context, '비밀번호는 4자리 이상으로 설정해 주세요');
+                      } else if (storageKeysState.passWd != currentPw) {
+                        Utils.showSnackBar(context, '현재 비밀번호가 맞지 않습니다');
+                      } else if (changePw != changePwConfirm) {
+                        Utils.showSnackBar(context, '바꿀 비밀번호가 일치하지 않습니다');
+                      } else {
                         await ref
                             .read(myPageProvider.notifier)
                             .changePassWord(changePw);
+                        await ref
+                            .read(storageKeyProvider.notifier)
+                            .updatePassWd(changePw);
+                        context.pop();
                       }
                     },
                   );
@@ -231,20 +246,10 @@ class _MenuContainerWidget extends ConsumerWidget {
               text: '회원 탈퇴',
             ),
           ),
-          appVersion.when(
-            data: (appVersion) => _MenuWidget(
-              icon: Icons.info,
-              text: '버전정보',
-              versionInfo: appVersion,
-            ),
-            error: (error, stackTrace) => const _MenuWidget(
-              icon: Icons.info,
-              text: '버전정보',
-              versionInfo: 'x.x.x',
-            ),
-            loading: () => const Center(
-              child: CircularProgressIndicator(),
-            ),
+          _MenuWidget(
+            icon: Icons.info,
+            text: '버전정보',
+            versionInfo: storageKeysState.appInfo,
           ),
         ],
       ),
@@ -341,16 +346,14 @@ class _logoutWidget extends ConsumerWidget {
 
 void _handleStateChanges(BuildContext context, MyPageState state) {
   if (state.changeNickName != null) {
-    final message = state.changeNickName == 0
-        ? '닉네임 변경에 성공하였습니다.'
-        : '닉네임 변경에 실패하였습니다.';
+    final message =
+        state.changeNickName == 0 ? '닉네임 변경에 성공하였습니다.' : '닉네임 변경에 실패하였습니다.';
     Utils.showSnackBar(context, message);
   }
 
   if (state.changePassWord != null) {
-    final message = state.changePassWord == 0
-        ? '비밀번호가 변경되었습니다.'
-        : '비밀번호 변경에 실패하였습니다.';
+    final message =
+        state.changePassWord == 0 ? '비밀번호가 변경되었습니다.' : '비밀번호 변경에 실패하였습니다.';
     Utils.showSnackBar(context, message);
   }
 
@@ -362,8 +365,8 @@ void _handleStateChanges(BuildContext context, MyPageState state) {
     }
   }
 
-  if(state.logout != null) {
-    if(state.logout == 0) {
+  if (state.logout != null) {
+    if (state.logout == 0) {
       context.goNamed(LoginScreen.name);
     } else {
       Utils.showSnackBar(context, '로그아웃에 실패했어요');

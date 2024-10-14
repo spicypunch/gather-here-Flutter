@@ -76,8 +76,7 @@ void onStart(ServiceInstance service) async {
 
   final locationManager = LocationManager();
   final storage = FlutterSecureStorage();
-  final socketManager = SocketManager();
-  socketManager.initialize(storage);
+  final socketManager = SocketManager(storage);
 
   final destinationLat = await storage.read(key: StorageKey.destinationLat.name);
   final destinationLng = await storage.read(key: StorageKey.destinationLng.name);

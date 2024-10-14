@@ -1,4 +1,4 @@
-package com.example.gather_here
+package com.threekim.gatherhere
 
 import io.flutter.embedding.android.FlutterActivity
 
