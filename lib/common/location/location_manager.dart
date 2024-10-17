@@ -29,6 +29,13 @@ class LocationManager {
       return Future.error('위치권한 요청이 영원히 거부됨');
     }
 
+    if (permission == LocationPermission.whileInUse) {
+      permission = await Geolocator.requestPermission();
+      if (permission != LocationPermission.always) {
+        return Future.error('위치 권한이 "항상 허용"으로 설정되지 않았습니다.');
+      }
+    }
+
     final position = await Geolocator.getLastKnownPosition();
 
     if (position != null) {

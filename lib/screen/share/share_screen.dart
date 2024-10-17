@@ -61,6 +61,7 @@ class _ShareScreenState extends ConsumerState<ShareScreen>
       }
     } else if (state == AppLifecycleState.resumed) {
       if (isRunning) {
+        closeSocketConnect();
         stopBackgroundService();
       }
     }

@@ -57,4 +57,8 @@ class SocketManager {
 
     print('send Information!!');
   }
+
+  bool isConnected() {
+    return _channel != null && _channel.closeCode == null;
+  }
 }
