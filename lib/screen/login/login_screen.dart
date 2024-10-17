@@ -65,7 +65,7 @@ class _TitleHeader extends StatelessWidget {
           ),
           SizedBox(height: 20),
           Text(
-            '목적지까지 함께!\n방을 만들어 위치를 공유하고 가장 가까운 친구를 확인하세요.',
+            '목적지까지 함께!\n방을 만들고 친구들과 위치를 공유하세요.',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
           ),
         ],
