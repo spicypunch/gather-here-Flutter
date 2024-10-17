@@ -11,6 +11,7 @@ import 'package:gather_here/common/provider/member_info_provider.dart';
 import 'package:gather_here/common/utils/utils.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 import '../../common/const/colors.dart';
 import '../../common/storage/storage.dart';
@@ -24,7 +25,6 @@ class MyPageScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-
     ref.listen(myPageProvider.select((value) => value.message), (prev, next) async {
       if (prev != next && next != null) {
         Utils.showSnackBar(context, next);
@@ -45,11 +45,113 @@ class MyPageScreen extends ConsumerWidget {
           child: Column(
             children: [
               _ProfileHeader(),
-              SizedBox(height: 52),
+              const SizedBox(height: 24),
               _SettingList(),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ProfileHeader extends ConsumerWidget {
+  const _ProfileHeader({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final memberState = ref.watch(memberInfoProvider);
+
+    return Row(
+      children: [
+        _profileImage(context, ref),
+        const SizedBox(width: 16),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _userName(context, ref),
+            _userPhoneNumber(ref),
+          ],
+        )
+      ],
+    );
+  }
+
+  Widget _profileImage(BuildContext context, WidgetRef ref) {
+    final memberState = ref.watch(memberInfoProvider);
+    return GestureDetector(
+      onTap: () async {
+        final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+
+        if (pickedFile != null) {
+          final file = File(pickedFile.path);
+          ref.read(memberInfoProvider.notifier).changeProfileImage(file);
+        }
+      },
+      child: Stack(
+        children: [
+          if (memberState.memberInfoModel?.profileImageUrl != null)
+            ClipOval(
+              child: Image.network(
+                memberState.memberInfoModel!.profileImageUrl!,
+                width: 64,
+                height: 64,
+                fit: BoxFit.cover,
+              ),
+            ),
+          if (memberState.memberInfoModel?.profileImageUrl == null) const Icon(Icons.account_circle, size: 64),
+          Positioned(
+            bottom: 4,
+            right: 4,
+            child: Container(
+              decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(width: 1)),
+              child: const Icon(Icons.edit, size: 15),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _userName(BuildContext context, WidgetRef ref) {
+    final memberState = ref.watch(memberInfoProvider);
+
+    return Row(
+      children: [
+        Text(
+          memberState.memberInfoModel!.nickname,
+          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+        IconButton(
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return DefaultTextFieldDialog(
+                  title: '어떤 닉네임으로 변경할까요?',
+                  labels: ['2~20자 이내로 입력해주세요'],
+                  onChanged: (nickName) async {
+                    await ref.read(memberInfoProvider.notifier).changeNickName(nickName.last);
+                    context.pop();
+                  },
+                );
+              },
+            );
+          },
+          icon: Icon(Icons.edit, size: 18),
+        )
+      ],
+    );
+  }
+
+  Widget _userPhoneNumber(WidgetRef ref) {
+    final memberState = ref.watch(memberInfoProvider);
+
+    return Text(
+      memberState.memberInfoModel!.identity,
+      style: const TextStyle(
+        fontSize: 16,
+        color: AppColor.grey1,
       ),
     );
   }
@@ -62,15 +164,29 @@ class _SettingList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final storageState = ref.watch(storageKeyProvider);
 
-    return ListView(
-      physics: NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      children: [
-        _settingRow(title: '비밀번호 변경', icon: Icons.key, onTap: () => _changePassword(context, ref)),
-        _settingRow(title: '회원탈퇴', icon: Icons.output, onTap: () => _withDrawl(context, ref)),
-        _settingRow(title: '버전정보', icon: Icons.info, subTitle: storageState.appInfo.toString()),
-        _logoutButton(ref)
-      ],
+    return Container(
+      padding: EdgeInsets.all(8),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.all(Radius.circular(8))),
+      child: ListView(
+        physics: NeverScrollableScrollPhysics(),
+        shrinkWrap: true,
+        children: [
+          _settingRow(title: '비밀번호 변경', icon: Icons.key, onTap: () => _changePassword(context, ref)),
+          const SizedBox(height: 16),
+          _settingRow(title: '로그아웃', icon: Icons.logout, onTap: () => ref.read(myPageProvider.notifier).logout()),
+          const SizedBox(height: 16),
+          _settingRow(title: '회원탈퇴', icon: Icons.cancel, onTap: () => _withDrawl(context, ref)),
+          const SizedBox(height: 16),
+          _settingRow(title: '서비스 이용약관', icon: Icons.description, indicator: true, onTap: () {
+            launchUrlString('https://www.naver.com');
+          }),
+          const SizedBox(height: 16),
+          _settingRow(title: '개발자 정보', icon: Icons.developer_board, indicator: true, onTap: () {}),
+          const SizedBox(height: 16),
+          _settingRow(title: '버전정보', icon: Icons.info, subTitle: storageState.appInfo.toString()),
+
+        ],
+      ),
     );
   }
 
@@ -127,7 +243,13 @@ class _SettingList extends ConsumerWidget {
     );
   }
 
-  Widget _settingRow({required String title, required IconData icon, String? subTitle, VoidCallback? onTap}) {
+  Widget _settingRow({
+    required String title,
+    required IconData icon,
+    String? subTitle,
+    bool indicator = false,
+    VoidCallback? onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       child: Row(
@@ -143,120 +265,11 @@ class _SettingList extends ConsumerWidget {
           const SizedBox(width: 16),
           Text(title, style: const TextStyle(fontSize: 16, color: AppColor.black2, fontWeight: FontWeight.w500)),
           const Spacer(),
-          if (subTitle != null) Text(subTitle, style: const TextStyle(fontSize: 16, color: AppColor.black2))
+          if (subTitle != null)
+            Text(subTitle, style: const TextStyle(fontSize: 16, color: AppColor.black2)),
+          if (indicator)
+            Icon(Icons.chevron_right)
         ],
-      ),
-    );
-  }
-
-  Widget _logoutButton(WidgetRef ref) {
-    return TextButton(
-      child: Text('로그아웃'),
-      onPressed: () async {
-        ref.read(myPageProvider.notifier).logout();
-      },
-    );
-  }
-}
-
-class _ProfileHeader extends ConsumerWidget {
-  const _ProfileHeader({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final memberState = ref.watch(memberInfoProvider);
-
-    return Row(
-      children: [
-        _profileImage(context, ref),
-        const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _userName(context, ref),
-            _userPhoneNumber(ref),
-          ],
-        )
-      ],
-    );
-  }
-
-  Widget _profileImage(BuildContext context, WidgetRef ref) {
-    final memberState = ref.watch(memberInfoProvider);
-    return GestureDetector(
-      onTap: () async {
-        final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-
-        if (pickedFile != null) {
-          final file = File(pickedFile.path);
-          ref.read(memberInfoProvider.notifier).changeProfileImage(file);
-        }
-      },
-      child: Stack(
-        children: [
-          if (memberState.memberInfoModel?.profileImageUrl != null)
-            ClipOval(
-              child: Image.network(
-                memberState.memberInfoModel!.profileImageUrl!,
-                width: 64,
-                height: 64,
-                fit: BoxFit.cover,
-              ),
-            ),
-          if (memberState.memberInfoModel?.profileImageUrl == null) const Icon(Icons.account_circle, size: 64),
-
-          Positioned(
-            bottom: 4,
-            right: 4,
-            child: Container(
-              decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(width: 1)),
-              child: const Icon(Icons.edit, size: 15),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _userName(BuildContext context, WidgetRef ref) {
-    final memberState = ref.watch(memberInfoProvider);
-
-    return Row(
-      children: [
-        Text(
-          memberState.memberInfoModel!.nickname,
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        IconButton(
-          onPressed: () {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return DefaultTextFieldDialog(
-                  title: '어떤 닉네임으로 변경할까요?',
-                  labels: ['2~20자 이내로 입력해주세요'],
-                  onChanged: (nickName) async {
-                    await ref.read(memberInfoProvider.notifier).changeNickName(nickName.last);
-                    context.pop();
-                  },
-                );
-              },
-            );
-          },
-          icon: Icon(Icons.edit, size: 18),
-        )
-      ],
-    );
-  }
-
-  Widget _userPhoneNumber(WidgetRef ref) {
-    final memberState = ref.watch(memberInfoProvider);
-
-    return Text(
-      memberState.memberInfoModel!.identity,
-      style: const TextStyle(
-        fontSize: 16,
-        color: AppColor.grey1,
       ),
     );
   }
