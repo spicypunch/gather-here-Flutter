@@ -10,25 +10,14 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 final socketManagerProvider = Provider((ref) {
   final storage = ref.watch(storageProvider);
-  final socketManager = SocketManager(storage);
-  return socketManager;
+  return SocketManager(storage: storage);
 });
 
 class SocketManager {
-  static final SocketManager _instance = SocketManager._internal();
   late WebSocketChannel _channel;
-  late FlutterSecureStorage storage;
+  final FlutterSecureStorage storage;
 
-  factory SocketManager(FlutterSecureStorage storage) {
-    _instance.storage = storage;
-    return _instance;
-  }
-
-  SocketManager._internal();
-
-  void initialize(FlutterSecureStorage storage) {
-    this.storage = storage;
-  }
+  SocketManager({required this.storage});
 
   Future<void> connect() async {
     final token = await storage.read(key: StorageKey.accessToken.name);

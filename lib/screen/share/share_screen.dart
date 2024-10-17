@@ -59,11 +59,13 @@ class _ShareScreenState extends ConsumerState<ShareScreen> with WidgetsBindingOb
     final isRunning = await service.isRunning();
     if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
       if (!isRunning) {
+        ref.read(shareProvider.notifier).disconnectOnlySocket();
         startBackgroundService();
       }
     } else if (state == AppLifecycleState.resumed) {
       if (isRunning) {
         stopBackgroundService();
+        ref.read(shareProvider.notifier).connectSocket(type: 1);
       }
     }
   }
@@ -203,7 +205,8 @@ class _MapState extends ConsumerState<_Map> {
 
   void _setup() async {
     await ref.read(shareProvider.notifier).setInitState(widget.isHost, widget.roomModel);
-    await ref.read(shareProvider.notifier).connectSocket();
+    final isHost = ref.read(shareProvider).isHost == 'true';
+    await ref.read(shareProvider.notifier).connectSocket(type: isHost ? 0 : 1);
     ref.read(shareProvider.notifier).observeMyLocation((lat, lon) {
       _moveToTargetPosition(lat: lat, lon: lon);
     });

@@ -27,6 +27,7 @@ class ShareState {
   List<Marker?> markers;
   int remainSeconds;
   bool isTracking;
+  bool isSocketClosed;
 
   ShareState({
     this.myLat,
@@ -38,6 +39,7 @@ class ShareState {
     required this.markers,
     this.remainSeconds = 0,
     required this.isTracking,
+    this.isSocketClosed = false,
   });
 }
 
@@ -100,9 +102,11 @@ class ShareProvider extends StateNotifier<ShareState> {
     _setState();
   }
 
-  // 소켓 최초연결
-  Future<void> connectSocket() async {
+  // 소켓 최초연결 (type 0: create, type1: join, type2: event)
+  Future<void> connectSocket({required int type}) async {
     await socketManager.connect();
+    state.isSocketClosed = true;
+
     final distance = locationManager.calculateDistance(
       state.myLat!,
       state.myLong!,
@@ -111,11 +115,8 @@ class ShareProvider extends StateNotifier<ShareState> {
     );
     state.distance = distance;
     _setState();
-    if (state.isHost == 'true') {
-      deliveryMyInfo(0);
-    } else {
-      deliveryMyInfo(1);
-    }
+
+    deliveryMyInfo(type);
 
     socketManager.observeConnection().listen(
       (position) async {
@@ -141,7 +142,6 @@ class ShareProvider extends StateNotifier<ShareState> {
         );
 
         state.markers = markers;
-        print('length: ${state.markers.length}');
 
         for (int i = 0; i < state.members.length; i++) {
           state.members[i].rank = i + 1;
@@ -150,10 +150,12 @@ class ShareProvider extends StateNotifier<ShareState> {
         _setState();
       },
       onDone: () async {
+        if (state.isSocketClosed) { return; }
+
         final result = await roomRepository.getRoom();
         // room api 조회후, 방이 남아 있다면 다시 연결 해주기
         if (result.roomSeq != null) {
-          await connectSocket();
+          await connectSocket(type: 1);
         }
         // 종료일 땐 방 나가기
         else {
@@ -162,6 +164,12 @@ class ShareProvider extends StateNotifier<ShareState> {
         }
       },
     );
+  }
+
+  // 소켓연결만 종료
+  void disconnectOnlySocket() async {
+    state.isSocketClosed = true;
+    await socketManager.close();
   }
 
   // 소켓연결종료

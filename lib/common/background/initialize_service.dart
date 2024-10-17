@@ -74,23 +74,24 @@ void onStart(ServiceInstance service) async {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  final locationManager = LocationManager();
   final storage = FlutterSecureStorage();
-  final socketManager = SocketManager(storage);
-
-  final destinationLat = await storage.read(key: StorageKey.destinationLat.name);
-  final destinationLng = await storage.read(key: StorageKey.destinationLng.name);
+  final socketManager = SocketManager(storage: storage);
 
   try {
     await socketManager.connect();
-    socketManager.observeConnection().listen(
-          (message) {
+    _deliverInfo(socketManager, 1);
+
+    socketManager.observeConnection().listen((message) {
         debugPrint('callback: $message');
+      },
+      onDone: () {
+        socketManager.connect();
+        _deliverInfo(socketManager, 1);
+
       },
       onError: (error) {
         debugPrint('소켓 에러 발생: $error');
-        // 재연결 시도
-        socketManager.connect();
+        _deliverInfo(socketManager, 1);
       },
     );
   } catch (e) {
@@ -108,6 +109,7 @@ void onStart(ServiceInstance service) async {
   }
 
   service.on('stopService').listen((event) {
+    socketManager.close();
     service.stopSelf();
   });
 
@@ -122,30 +124,39 @@ void onStart(ServiceInstance service) async {
             android: AndroidNotificationDetails(
               notificationChannelId,
               'MY FOREGROUND SERVICE',
-              // 아이콘 추후 수정
+              // TODO: 아이콘 추후 수정
               icon: 'ic_bg_service_small',
               ongoing: true,
             ),
           ),
         );
-
       }
     }
-    final position = await locationManager.getCurrentPosition();
-    final distance = locationManager.calculateDistance(
-      position.latitude,
-      position.longitude,
-      double.parse(destinationLat!),
-      double.parse(destinationLng!),
-    );
-    debugPrint('Background service running: latitude ${position.latitude}, longitude ${position.longitude}, distance $distance');
-    socketManager.deliveryMyInfo(
-      SocketRequestModel(
-        type: 2,
-        presentLat: position.latitude,
-        presentLng: position.longitude,
-        destinationDistance: distance,
-      ),
-    );
+
+    _deliverInfo(socketManager, 2);
   });
+}
+
+void _deliverInfo(SocketManager socketManager, int type) async {
+  final locationManager = LocationManager();
+  final storage = FlutterSecureStorage();
+  final destinationLat = await storage.read(key: StorageKey.destinationLat.name);
+  final destinationLng = await storage.read(key: StorageKey.destinationLng.name);
+
+  final position = await locationManager.getCurrentPosition();
+  final distance = locationManager.calculateDistance(
+    position.latitude,
+    position.longitude,
+    double.parse(destinationLat!),
+    double.parse(destinationLng!),
+  );
+  debugPrint('Background service running: latitude ${position.latitude}, longitude ${position.longitude}, distance $distance');
+  socketManager.deliveryMyInfo(
+    SocketRequestModel(
+      type: 2,
+      presentLat: position.latitude,
+      presentLng: position.longitude,
+      destinationDistance: distance,
+    ),
+  );
 }

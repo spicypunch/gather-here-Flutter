@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -6,7 +7,19 @@ final locationManagerProvider = Provider((ref) {
 });
 
 class LocationManager {
-  final locationSetting = const LocationSettings(distanceFilter: 5);
+  final locationSetting = Platform.isIOS ? AppleSettings(
+    accuracy: LocationAccuracy.high,
+    activityType: ActivityType.airborne,
+    distanceFilter: 5,
+    pauseLocationUpdatesAutomatically: true,
+    showBackgroundLocationIndicator: true,
+    allowBackgroundLocationUpdates: true,
+  ) : AndroidSettings(
+    accuracy: LocationAccuracy.high,
+    distanceFilter: 5,
+    forceLocationManager: false,
+    intervalDuration: const Duration(seconds: 5)
+  );
 
   Future<Position> getCurrentPosition() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
