@@ -1,38 +1,35 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:gather_here/common/model/request/nickname_model.dart';
 import 'package:gather_here/common/model/request/password_model.dart';
 import 'package:gather_here/common/repository/member_repository.dart';
+import 'package:gather_here/common/router/router.dart';
 import 'package:gather_here/common/storage/storage.dart';
+import 'package:gather_here/screen/login/login_screen.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../common/repository/auth_repository.dart';
 
 class MyPageState {
-  int? changeNickName;
-  int? changePassWord;
-  int? deleteMember;
-  int? logout;
+  String? message;
 
   MyPageState({
-    this.changeNickName,
-    this.changePassWord,
-    this.deleteMember,
-    this.logout,
+    this.message,
   });
 }
 
-final myPageProvider =
-    AutoDisposeStateNotifierProvider<MyPageProvider, MyPageState>((ref) {
+final myPageProvider = AutoDisposeStateNotifierProvider<MyPageProvider, MyPageState>((ref) {
   final memberRepository = ref.watch(memberRepositoryProvider);
   final authRepository = ref.watch(authRepositoryProvider);
 
+  final router = ref.watch(routerProvider);
   final storage = ref.watch(storageProvider);
 
   return MyPageProvider(
     memberRepository: memberRepository,
     authRepository: authRepository,
     storage: storage,
+    router: router
   );
 });
 
@@ -40,36 +37,19 @@ class MyPageProvider extends StateNotifier<MyPageState> {
   final MemberRepository memberRepository;
   final AuthRepository authRepository;
   final FlutterSecureStorage storage;
+  final GoRouter router;
 
   MyPageProvider({
     required this.memberRepository,
     required this.authRepository,
     required this.storage,
-  }) : super(MyPageState()) {
-    // 초기 상태를 로딩 상태로 설정
-  }
+    required this.router,
+  }) : super(MyPageState());
 
-  void _setState() {
-    state = MyPageState(
-      changeNickName: state.changeNickName,
-      changePassWord: state.changePassWord,
-      deleteMember: state.deleteMember,
-      logout: state.logout,
-    );
-  }
-
-  Future<void> changeNickName(String nickName) async {
-    try {
-      await memberRepository.patchChangeNickName(
-        body: NicknameModel(nickname: nickName),
-      );
-      state.changeNickName = 0;
-      _setState();
-    } catch (e) {
-      debugPrint('changeNickName Err: $e');
-      state.changeNickName = 1;
-      _setState();
-    }
+  void _setState() async {
+    state = MyPageState(message: state.message);
+    await Future.delayed(Duration(seconds: 1));
+    state = MyPageState(message: null);
   }
 
   Future<void> changePassWord(String passWord) async {
@@ -77,11 +57,11 @@ class MyPageProvider extends StateNotifier<MyPageState> {
       await memberRepository.patchChangePassWord(
         body: PasswordModel(password: passWord),
       );
-      state.changePassWord = 0;
+      state.message = '비밀번호가 변경되었습니다.';
       _setState();
     } catch (e) {
       debugPrint('changePassWord Err: $e');
-      state.changePassWord = 1;
+      state.message = '비밀번호 변경에 실패하였습니다.';
       _setState();
     }
   }
@@ -90,11 +70,9 @@ class MyPageProvider extends StateNotifier<MyPageState> {
     try {
       await authRepository.deleteMember();
       await storage.deleteAll();
-      state.deleteMember = 0;
-      _setState();
+      router.goNamed(LoginScreen.name);
     } catch (e) {
-      debugPrint('deleteMember Err: $e');
-      state.deleteMember = 1;
+      state.message = '회원탈퇴에 실패했어요';
       _setState();
     }
   }
@@ -102,11 +80,9 @@ class MyPageProvider extends StateNotifier<MyPageState> {
   Future<void> logout() async {
     try {
       await storage.deleteAll();
-      state.logout = 0;
-      _setState();
+      router.goNamed(LoginScreen.name);
     } catch (e) {
-      debugPrint('logout Err: $e');
-      state.logout = 1;
+      state.message = '로그아웃에 실패했어요';
       _setState();
     }
   }

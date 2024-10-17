@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gather_here/common/components/default_alert_dialog.dart';
 import 'package:gather_here/common/components/default_layout.dart';
@@ -15,13 +17,26 @@ import '../../common/storage/storage.dart';
 import '../login/login_screen.dart';
 import 'my_page_provider.dart';
 
-class MyPageScreen extends StatelessWidget {
+class MyPageScreen extends ConsumerWidget {
   static String get name => 'my_page';
 
   const MyPageScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+
+    ref.listen(myPageProvider.select((value) => value.message), (prev, next) async {
+      if (prev != next && next != null) {
+        Utils.showSnackBar(context, next);
+      }
+    });
+
+    ref.listen(memberInfoProvider.select((value) => value.message), (prev, next) async {
+      if (prev != next && next != null) {
+        Utils.showSnackBar(context, next);
+      }
+    });
+
     return DefaultLayout(
       title: '마이 페이지',
       child: SafeArea(
@@ -29,10 +44,9 @@ class MyPageScreen extends StatelessWidget {
           padding: EdgeInsets.all(16.0),
           child: Column(
             children: [
-              _ProfileWidget(),
+              _ProfileHeader(),
               SizedBox(height: 52),
-              _MenuContainerWidget(),
-              _logoutWidget(),
+              _SettingList(),
             ],
           ),
         ),
@@ -41,335 +55,209 @@ class MyPageScreen extends StatelessWidget {
   }
 }
 
-class _ProfileWidget extends ConsumerWidget {
-  const _ProfileWidget({super.key});
+class _SettingList extends ConsumerWidget {
+  const _SettingList({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final memberInfoState = ref.watch(memberInfoProvider);
-    ref.listen<MyPageState>(myPageProvider, (previous, current) {
-      if (current.changeNickName == 0 || current.changePassWord == 0) {
-        ref.read(memberInfoProvider.notifier).getMyInfo();
-      }
-      _handleStateChanges(context, current);
-    });
+    final storageState = ref.watch(storageKeyProvider);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () async {
-              final pickedFile =
-                  await ImagePicker().pickImage(source: ImageSource.gallery);
-
-              if (pickedFile != null) {
-                // 선택한 이미지의 파일 경로를 참조하여 파일 원본에 접근할 수 있는 객체 생성
-                final file = File(pickedFile.path);
-                final result = await ref
-                    .read(memberInfoProvider.notifier)
-                    .changeProfileImage(file);
-                final message =
-                    result ? '프로필 사진이 업데이트 되었습니다.' : '프로필 사진 업데이트에 실패하였습니다.';
-                Utils.showSnackBar(context, message);
-              }
-            },
-            child: Stack(
-              children: [
-                memberInfoState.memberInfoModel?.profileImageUrl != null
-                    ? ClipOval(
-                        child: Image.network(
-                          memberInfoState.memberInfoModel!.profileImageUrl!,
-                          width: 64,
-                          height: 64,
-                          fit: BoxFit.cover,
-                        ),
-                      )
-                    : const Icon(
-                        Icons.account_circle,
-                        size: 64,
-                      ),
-                Positioned(
-                  bottom: 4,
-                  right: 4,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        width: 1,
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.edit,
-                      size: 15,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              GestureDetector(
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return DefaultTextFieldDialog(
-                        title: '어떤 닉네임으로 변경할까요?',
-                        labels: ['2~20자 이내로 입력해주세요'],
-                        onChanged: (nickName) async {
-                          await ref
-                              .read(myPageProvider.notifier)
-                              .changeNickName(nickName.last);
-                          context.pop();
-                        },
-                      );
-                    },
-                  );
-                },
-                child: Row(
-                  children: [
-                    Text(
-                      memberInfoState.memberInfoModel!.nickname,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 5),
-                    const Icon(
-                      Icons.edit,
-                      size: 18,
-                    )
-                  ],
-                ),
-              ),
-              Text(
-                memberInfoState.memberInfoModel!.identity,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: AppColor.grey1,
-                ),
-              ),
-            ],
-          )
-        ],
-      ),
+    return ListView(
+      physics: NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
+      children: [
+        _settingRow(title: '비밀번호 변경', icon: Icons.key, onTap: () => _changePassword(context, ref)),
+        _settingRow(title: '회원탈퇴', icon: Icons.output, onTap: () => _withDrawl(context, ref)),
+        _settingRow(title: '버전정보', icon: Icons.info, subTitle: storageState.appInfo.toString()),
+        _logoutButton(ref)
+      ],
     );
   }
-}
 
-class _MenuContainerWidget extends ConsumerWidget {
-  const _MenuContainerWidget({
-    super.key,
-  });
+  void _changePassword(BuildContext context, WidgetRef ref) {
+    final storageState = ref.watch(storageKeyProvider);
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final storageKeysState = ref.watch(storageKeyProvider);
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColor.white,
-        borderRadius: BorderRadius.circular(16.0),
-      ),
-      child: Column(
-        children: [
-          GestureDetector(
-            onTap: () {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return DefaultTextFieldDialog(
-                    title: '비밀번호 변경',
-                    labels: const [
-                      '기존 비밀번호 입력',
-                      '새 비밀번호 입력',
-                      '새 비밀번호 확인',
-                    ],
-                    hideText: true,
-                    onChanged: (textList) async {
-                      final currentPw = textList[0];
-                      final changePw = textList[1];
-                      final changePwConfirm = textList[2];
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return DefaultTextFieldDialog(
+          title: '비밀번호 변경',
+          labels: const [
+            '기존 비밀번호 입력',
+            '새 비밀번호 입력',
+            '새 비밀번호 확인',
+          ],
+          hideText: true,
+          onChanged: (textList) async {
+            final currentPw = textList[0];
+            final changePw = textList[1];
+            final changePwConfirm = textList[2];
 
-                      if (currentPw.isEmpty ||
-                          changePw.isEmpty ||
-                          changePwConfirm.isEmpty) {
-                        Utils.showSnackBar(context, '빈칸을 채워주세요');
-                      } else if (changePw.length < 4 ||
-                          changePwConfirm.length < 4) {
-                        Utils.showSnackBar(context, '비밀번호는 4자리 이상으로 설정해 주세요');
-                      } else if (storageKeysState.passWd != currentPw) {
-                        Utils.showSnackBar(context, '현재 비밀번호가 맞지 않습니다');
-                      } else if (changePw != changePwConfirm) {
-                        Utils.showSnackBar(context, '바꿀 비밀번호가 일치하지 않습니다');
-                      } else {
-                        await ref
-                            .read(myPageProvider.notifier)
-                            .changePassWord(changePw);
-                        await ref
-                            .read(storageKeyProvider.notifier)
-                            .updatePassWd(changePw);
-                        context.pop();
-                      }
-                    },
-                  );
-                },
-              );
-            },
-            child: const _MenuWidget(
-              icon: Icons.key,
-              text: '비밀번호 변경',
-            ),
-          ),
-          GestureDetector(
-            onTap: () {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return DefaultAlertDialog(
-                    title: '정말 회원탈퇴 할까요?',
-                    content: '다시 되돌릴 수 없어요 :(',
-                    onTabConfirm: () async {
-                      await ref.read(myPageProvider.notifier).deleteMember();
-                    },
-                  );
-                },
-              );
-            },
-            child: const _MenuWidget(
-              icon: Icons.output,
-              text: '회원 탈퇴',
-            ),
-          ),
-          _MenuWidget(
-            icon: Icons.info,
-            text: '버전정보',
-            versionInfo: storageKeysState.appInfo,
-          ),
-        ],
-      ),
+            if (currentPw.isEmpty || changePw.isEmpty || changePwConfirm.isEmpty) {
+              Utils.showSnackBar(context, '빈칸을 채워주세요');
+            } else if (changePw.length < 4 || changePwConfirm.length < 4) {
+              Utils.showSnackBar(context, '비밀번호는 4자리 이상으로 설정해 주세요');
+            } else if (storageState.passWd != currentPw) {
+              Utils.showSnackBar(context, '현재 비밀번호가 맞지 않습니다');
+            } else if (changePw != changePwConfirm) {
+              Utils.showSnackBar(context, '바꿀 비밀번호가 일치하지 않습니다');
+            } else {
+              await ref.read(myPageProvider.notifier).changePassWord(changePw);
+              await ref.read(storageKeyProvider.notifier).updatePassWd(changePw);
+              context.pop();
+            }
+          },
+        );
+      },
     );
   }
-}
 
-class _MenuWidget extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  final String? versionInfo;
+  void _withDrawl(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return DefaultAlertDialog(
+          title: '정말 회원탈퇴 할까요?',
+          content: '다시 되돌릴 수 없어요 :(',
+          onTabConfirm: () async {
+            await ref.read(myPageProvider.notifier).deleteMember();
+          },
+        );
+      },
+    );
+  }
 
-  const _MenuWidget({
-    required this.icon,
-    required this.text,
-    this.versionInfo,
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  Widget _settingRow({required String title, required IconData icon, String? subTitle, VoidCallback? onTap}) {
+    return InkWell(
+      onTap: onTap,
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppColor.grey5,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Text(
-            text,
-            style: const TextStyle(
-                fontSize: 16,
-                color: AppColor.black2,
-                fontWeight: FontWeight.w500),
-          ),
-          const Spacer(),
-          if (versionInfo != null)
-            Text(
-              versionInfo!,
-              style: const TextStyle(
-                fontSize: 16,
-                color: AppColor.black2,
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColor.grey5,
+                borderRadius: BorderRadius.circular(8),
               ),
-            )
+              child: Icon(icon, size: 24)),
+          const SizedBox(width: 16),
+          Text(title, style: const TextStyle(fontSize: 16, color: AppColor.black2, fontWeight: FontWeight.w500)),
+          const Spacer(),
+          if (subTitle != null) Text(subTitle, style: const TextStyle(fontSize: 16, color: AppColor.black2))
         ],
       ),
     );
   }
-}
 
-class _logoutWidget extends ConsumerWidget {
-  const _logoutWidget({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12.0),
-      child: GestureDetector(
-        onTap: () {
-          ref.read(myPageProvider.notifier).logout();
-        },
-        child: Container(
-          width: 85,
-          height: 40,
-          decoration: BoxDecoration(
-            color: AppColor.grey3,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: const Center(
-            child: Text(
-              '로그아웃',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: AppColor.black2,
-              ),
-            ),
-          ),
-        ),
-      ),
+  Widget _logoutButton(WidgetRef ref) {
+    return TextButton(
+      child: Text('로그아웃'),
+      onPressed: () async {
+        ref.read(myPageProvider.notifier).logout();
+      },
     );
   }
 }
 
-void _handleStateChanges(BuildContext context, MyPageState state) {
-  if (state.changeNickName != null) {
-    final message =
-        state.changeNickName == 0 ? '닉네임 변경에 성공하였습니다.' : '닉네임 변경에 실패하였습니다.';
-    Utils.showSnackBar(context, message);
+class _ProfileHeader extends ConsumerWidget {
+  const _ProfileHeader({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final memberState = ref.watch(memberInfoProvider);
+
+    return Row(
+      children: [
+        _profileImage(context, ref),
+        const SizedBox(width: 16),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _userName(context, ref),
+            _userPhoneNumber(ref),
+          ],
+        )
+      ],
+    );
   }
 
-  if (state.changePassWord != null) {
-    final message =
-        state.changePassWord == 0 ? '비밀번호가 변경되었습니다.' : '비밀번호 변경에 실패하였습니다.';
-    Utils.showSnackBar(context, message);
+  Widget _profileImage(BuildContext context, WidgetRef ref) {
+    final memberState = ref.watch(memberInfoProvider);
+    return GestureDetector(
+      onTap: () async {
+        final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+
+        if (pickedFile != null) {
+          final file = File(pickedFile.path);
+          ref.read(memberInfoProvider.notifier).changeProfileImage(file);
+        }
+      },
+      child: Stack(
+        children: [
+          if (memberState.memberInfoModel?.profileImageUrl != null)
+            ClipOval(
+              child: Image.network(
+                memberState.memberInfoModel!.profileImageUrl!,
+                width: 64,
+                height: 64,
+                fit: BoxFit.cover,
+              ),
+            ),
+          if (memberState.memberInfoModel?.profileImageUrl == null) const Icon(Icons.account_circle, size: 64),
+
+          Positioned(
+            bottom: 4,
+            right: 4,
+            child: Container(
+              decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(width: 1)),
+              child: const Icon(Icons.edit, size: 15),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  if (state.deleteMember != null) {
-    if (state.deleteMember == 0) {
-      context.goNamed(LoginScreen.name);
-    } else {
-      Utils.showSnackBar(context, '회원탈퇴에 실패했어요');
-    }
+  Widget _userName(BuildContext context, WidgetRef ref) {
+    final memberState = ref.watch(memberInfoProvider);
+
+    return Row(
+      children: [
+        Text(
+          memberState.memberInfoModel!.nickname,
+          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+        IconButton(
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return DefaultTextFieldDialog(
+                  title: '어떤 닉네임으로 변경할까요?',
+                  labels: ['2~20자 이내로 입력해주세요'],
+                  onChanged: (nickName) async {
+                    await ref.read(memberInfoProvider.notifier).changeNickName(nickName.last);
+                    context.pop();
+                  },
+                );
+              },
+            );
+          },
+          icon: Icon(Icons.edit, size: 18),
+        )
+      ],
+    );
   }
 
-  if (state.logout != null) {
-    if (state.logout == 0) {
-      context.goNamed(LoginScreen.name);
-    } else {
-      Utils.showSnackBar(context, '로그아웃에 실패했어요');
-    }
+  Widget _userPhoneNumber(WidgetRef ref) {
+    final memberState = ref.watch(memberInfoProvider);
+
+    return Text(
+      memberState.memberInfoModel!.identity,
+      style: const TextStyle(
+        fontSize: 16,
+        color: AppColor.grey1,
+      ),
+    );
   }
 }
