@@ -5,12 +5,16 @@ import 'package:gather_here/common/const/colors.dart';
 class DefaultAlertDialog extends StatelessWidget {
   final String title;
   final String content;
+  final String okTitle;
+  final String? cancelTitle;
   final String? image;
   final Function() onTabConfirm;
 
   const DefaultAlertDialog({
     required this.title,
     required this.content,
+    this.okTitle = "확인",
+    this.cancelTitle = "취소",
     required this.onTabConfirm,
     this.image,
     super.key,
@@ -22,36 +26,34 @@ class DefaultAlertDialog extends StatelessWidget {
       title: Text(
         title,
         textAlign: TextAlign.center,
-        style: const TextStyle(
-            fontWeight: FontWeight.w500
-        ),
+        style: const TextStyle(fontWeight: FontWeight.w500),
       ),
       content: Text(
         content,
         textAlign: TextAlign.center,
-        style: const TextStyle(
-            color: AppColor.grey1
-        ),
+        style: const TextStyle(color: AppColor.grey1),
       ),
       actions: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            Expanded(
-              child: DefaultButton(
-                title: '취소',
-                onTap: () {
-                  Navigator.of(context).pop();
-                },
-                backgroundColor: AppColor.grey2,
+            if (cancelTitle != null)
+              Expanded(
+                child: DefaultButton(
+                  title: cancelTitle!,
+                  onTap: () {
+                    Navigator.of(context).pop();
+                  },
+                  backgroundColor: AppColor.grey2,
+                ),
               ),
-            ),
-            const SizedBox(
-              width: 12,
-            ),
+            if (cancelTitle != null)
+              const SizedBox(
+                width: 12,
+              ),
             Expanded(
               child: DefaultButton(
-                title: '확인',
+                title: okTitle,
                 onTap: () {
                   onTabConfirm();
                   Navigator.of(context).pop();

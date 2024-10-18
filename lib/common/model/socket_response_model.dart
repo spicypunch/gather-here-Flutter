@@ -28,7 +28,6 @@ class SocketMemberListModel {
   final double presentLat;
   final double presentLng;
   final double destinationDistance;
-  final bool isOpen;
   int? rank;
 
   Color get color {
@@ -48,7 +47,6 @@ class SocketMemberListModel {
     required this.presentLng,
     required this.destinationDistance,
     this.rank,
-    required this.isOpen,
   });
 
   factory SocketMemberListModel.fromJson(Map<String, dynamic> json)

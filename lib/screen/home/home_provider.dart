@@ -140,25 +140,25 @@ class HomeProvider extends StateNotifier<HomeState> {
     if (state.targetDate == null || state.targetTime == null || state.selectedResult == null) {
       return null;
     }
-    
+
     try {
       final result = await roomRepo.postCreateRoom(
-          body: RoomCreateModel(
-            destinationLat: double.parse(state.selectedResult!.y),
-            destinationLng: double.parse(state.selectedResult!.x),
-            destinationName: state.selectedResult?.place_name ?? "",
-            encounterDate: encounterDate,
-          ),
-        );
-        saveDestinationLatLng(
-          double.parse(state.selectedResult!.y),
-          double.parse(state.selectedResult!.x),
-        );
-        print(result.toString());
-        return result;
-      } catch (err) {
-        print(err.toString());
-      }
+        body: RoomCreateModel(
+          destinationLat: double.parse(state.selectedResult!.y),
+          destinationLng: double.parse(state.selectedResult!.x),
+          destinationName: state.selectedResult?.place_name ?? "",
+          encounterDate: encounterDate,
+        ),
+      );
+      saveDestinationLatLng(
+        double.parse(state.selectedResult!.y),
+        double.parse(state.selectedResult!.x),
+      );
+      print(result.toString());
+      return result;
+    } catch (err) {
+      print(err.toString());
+    }
   }
 
   void queryChanged({required String value}) async {

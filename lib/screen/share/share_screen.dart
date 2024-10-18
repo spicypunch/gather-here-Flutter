@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:easy_debounce/easy_debounce.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -48,7 +47,7 @@ class _ShareScreenState extends ConsumerState<ShareScreen> with WidgetsBindingOb
   @override
   void dispose() {
     _timer.cancel();
-    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -216,7 +215,7 @@ class _MapState extends ConsumerState<_Map> {
   void _moveToTargetPosition({required double lat, required double lon}) async {
     if (ref.read(shareProvider).isTracking) {
       final GoogleMapController controller = await _controller.future;
-      final targetPosition = CameraPosition(target: LatLng(lat, lon), zoom: 14);
+      final targetPosition = CameraPosition(target: LatLng(lat, lon), zoom: 16);
       await controller.animateCamera(CameraUpdate.newCameraPosition(targetPosition));
     }
   }
