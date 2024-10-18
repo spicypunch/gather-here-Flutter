@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
 
 import 'package:easy_debounce/easy_debounce.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gather_here/common/components/default_alert_dialog.dart';
+import 'package:gather_here/common/location/location_manager.dart';
 import 'package:gather_here/common/utils/utils.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -28,24 +31,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  @override
-  void initState() {
-    super.initState();
-    _setup();
-  }
-
-  void _setup() async {
-    final room = await ref.read(homeProvider.notifier).getRoomInfo();
-
-    // room 정보가 있다면 shareScreen 으로 이동
-    if (room.roomSeq != null && mounted) {
-      context.pushNamed(
-        ShareScreen.name,
-        pathParameters: {'isHost': 'false'},
-        extra: room,
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -135,7 +120,7 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
         onChanged: (text) => EasyDebounce.debounce(
           'query',
           const Duration(seconds: 1),
-              () async {
+          () async {
             ref.read(homeProvider.notifier).queryChanged(value: text);
           },
         ),
@@ -184,7 +169,7 @@ class _Map extends ConsumerStatefulWidget {
   ConsumerState<_Map> createState() => _MapState();
 }
 
-class _MapState extends ConsumerState<_Map> {
+class _MapState extends ConsumerState<_Map> with WidgetsBindingObserver {
   final Completer<GoogleMapController> _controller = Completer<GoogleMapController>();
 
   late BitmapDescriptor _defaultMarker;
@@ -197,21 +182,68 @@ class _MapState extends ConsumerState<_Map> {
   @override
   void initState() {
     super.initState();
-
+    WidgetsBinding.instance.addObserver(this);
     _setup();
   }
 
-  void _setup() async {
-    // defaultMarker UI설정
-    _defaultMarker = await ref.read(homeProvider.notifier).createCustomMarkerBitmap('');
-    // 현재위치로 지도 이동시키기
-    ref.read(homeProvider.notifier).getCurrentLocation(() {
-      final state = ref.read(homeProvider);
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
 
-      if (state.lat != null && state.lon != null) {
-        _moveToTargetPosition(lat: state.lat!, lon: state.lon!);
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
+    if (state == AppLifecycleState.resumed) {
+      _setup();
+    }
+  }
+
+  void _setup() async {
+    final result = await LocationManager().requestPermission();
+
+    if (result) {
+      final room = await ref.read(homeProvider.notifier).getRoomInfo();
+
+      // room 정보가 있다면 shareScreen 으로 이동
+      if (room.roomSeq != null && mounted) {
+        context.pushNamed(
+          ShareScreen.name,
+          pathParameters: {'isHost': 'false'},
+          extra: room,
+        );
+        return;
       }
-    });
+
+      // defaultMarker UI설정
+      _defaultMarker = await ref.read(homeProvider.notifier).createCustomMarkerBitmap('');
+
+      // 현재위치로 지도 이동시키기
+      ref.read(homeProvider.notifier).getCurrentLocation(() {
+        final state = ref.read(homeProvider);
+
+        if (state.lat != null && state.lon != null) {
+          _moveToTargetPosition(lat: state.lat!, lon: state.lon!);
+        }
+      });
+
+    } else {
+      showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (BuildContext context) {
+          return DefaultAlertDialog(
+            title: '위치권한을 허용해주세요',
+            content: '사용자의 현재 위치를 지도에 나타내기 위해서\n 위치 권한허용이 필요해요 :)',
+            okTitle: '설정으로 이동',
+            cancelTitle: null,
+            onTabConfirm: () async {
+              AppSettings.openAppSettings(type: AppSettingsType.location);
+            },
+          );
+        },
+      );
+    }
   }
 
   // CustomMarker 그리기

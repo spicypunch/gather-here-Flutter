@@ -21,27 +21,31 @@ class LocationManager {
     intervalDuration: const Duration(seconds: 5)
   );
 
-  Future<Position> getCurrentPosition() async {
+  Future<bool> requestPermission() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    LocationPermission permission;
+    LocationPermission permission = await Geolocator.checkPermission();
 
     if (!serviceEnabled) {
-      return Future.error('위치서비스를 사용할 수 없음');
+      return false;
     }
 
-    permission = await Geolocator.checkPermission();
-
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return Future.error('위치권한 요청이 거부됨');
-      }
+    switch (permission) {
+      case LocationPermission.denied:
+        permission = await Geolocator.requestPermission();
+        return await requestPermission();
+      case LocationPermission.deniedForever:
+        return false;
+      case LocationPermission.whileInUse:
+        return true;
+      case LocationPermission.always:
+        return true;
+      case LocationPermission.unableToDetermine:
+        permission = await Geolocator.requestPermission();
+        return await requestPermission();
     }
+  }
 
-    if (permission == LocationPermission.deniedForever) {
-      return Future.error('위치권한 요청이 영원히 거부됨');
-    }
-
+  Future<Position> getCurrentPosition() async {
     final position = await Geolocator.getLastKnownPosition();
 
     if (position != null) {
