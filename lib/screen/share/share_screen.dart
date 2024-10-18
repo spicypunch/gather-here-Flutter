@@ -216,7 +216,7 @@ class _MapState extends ConsumerState<_Map> {
   void _moveToTargetPosition({required double lat, required double lon}) async {
     if (ref.read(shareProvider).isTracking) {
       final GoogleMapController controller = await _controller.future;
-      final targetPosition = CameraPosition(target: LatLng(lat, lon), zoom: 14);
+      final targetPosition = CameraPosition(target: LatLng(lat, lon), zoom: 16);
       await controller.animateCamera(CameraUpdate.newCameraPosition(targetPosition));
     }
   }
