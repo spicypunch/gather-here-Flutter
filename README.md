@@ -1,16 +1,2 @@
-# gather_here
-
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+# 여기로 모여라
+이동 경로를 함께 공유하세요! 우리 앱은 친구들과 목적지로 가는 여정을 실시간으로 공유할 수 있도록 도와줘요. 방을 생성하고 친구들에게 코드만 공유하면, 모두가 같은 지도에서 서로의 현재 위치와 목표지점까지의 거리를 확인할 수 있어요. 지도에 표시된 마커와 바텀 시트를 통해 누가 가장 빠르게 목적지에 도착할지 등수도 확인할 수 있어요. 함께하는 이동이 더 즐거워질 거예요! 지금 바로 친구들과 함께 경로를 공유해보세요.
