@@ -27,11 +27,24 @@
 
 ## UI
 - 로그인 화면
-![KakaoTalk_Photo_2024-10-22-19-33-32 008](https://github.com/user-attachments/assets/78633329-a94c-46ef-83b8-10db5af1ebe5)
-![KakaoTalk_Photo_2024-10-22-19-33-32 007](https://github.com/user-attachments/assets/c7e65156-5aef-4f75-b36f-0fb6c33e2ae7)
-![KakaoTalk_Photo_2024-10-22-19-33-32 006](https://github.com/user-attachments/assets/e95f3ae2-ada4-4eb3-a400-cde8514bc787)
-![KakaoTalk_Photo_2024-10-22-19-33-32 005](https://github.com/user-attachments/assets/29c63d28-ad4f-4d4a-8b25-c18523dd29e5)
-![KakaoTalk_Photo_2024-10-22-19-33-31 004](https://github.com/user-attachments/assets/280e5671-b9a1-4bc3-9b15-ff08718c80ea)
-![KakaoTalk_Photo_2024-10-22-19-33-31 003](https://github.com/user-attachments/assets/36b12077-58d0-449d-b4de-2611e5018145)
-![KakaoTalk_Photo_2024-10-22-19-33-31 002](https://github.com/user-attachments/assets/928ceed7-2c13-4580-9071-54847615a05c)
-![KakaoTalk_Photo_2024-10-22-19-33-31 001](https://github.com/user-attachments/assets/68c1a8f6-6f5e-47c0-a055-5bc9a50795f6)
+<img src="https://github.com/user-attachments/assets/7a292280-bc91-448b-b9d6-71a55b4ea03b" width=200>
+<img src="https://github.com/user-attachments/assets/05f9f4bd-9952-4ea8-aa4d-23ea116fc01d" width=200>
+  - 휴대폰 번호 11자리, 비밀번호 4자리 이상일 경우 로그인 버튼을 활성화 해요.
+ 
+- 회원가입 화면
+<img src="https://github.com/user-attachments/assets/9976833a-935c-4b12-9504-efdef4e4e362" width=200>
+<img src="https://github.com/user-attachments/assets/3cebf48a-6983-4c0e-8bc2-acde8944fea6" width=200>
+  - 휴대폰 번호 11자리, 비밀번호 4자리 이상, 비밀번호 확인, 약관 동의 여부를 확인 후 회원가입 버튼을 활성화 해요.
+
+- 홈 화면
+<img src="https://github.com/user-attachments/assets/38f7a394-2ede-443f-99e6-2c33d4d6bec0" width=200>
+<img src="https://github.com/user-attachments/assets/4939c833-363e-4e4b-97af-3433829579cd" width=200>
+<img src="https://github.com/user-attachments/assets/7c3f155e-aa4b-47f1-985a-7640660b9a63" width=200>
+  - 
+
+
+
+
+<img src="" width=200>
+
+
