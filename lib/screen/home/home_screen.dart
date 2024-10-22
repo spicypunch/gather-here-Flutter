@@ -174,8 +174,8 @@ class _Map extends ConsumerStatefulWidget {
 }
 
 class _MapState extends ConsumerState<_Map> with WidgetsBindingObserver {
-  final Completer<GoogleMapController> _controller =
-      Completer<GoogleMapController>();
+
+  final Completer<GoogleMapController> _controller = Completer<GoogleMapController>();
 
   late BitmapDescriptor _defaultMarker;
 
@@ -221,8 +221,7 @@ class _MapState extends ConsumerState<_Map> with WidgetsBindingObserver {
       }
 
       // defaultMarker UI설정
-      _defaultMarker =
-          await ref.read(homeProvider.notifier).createCustomMarkerBitmap('');
+      _defaultMarker = await ref.read(homeProvider.notifier).createCustomMarkerBitmap('');
 
       // 현재위치로 지도 이동시키기
       ref.read(homeProvider.notifier).getCurrentLocation(() {
