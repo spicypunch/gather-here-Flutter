@@ -49,9 +49,9 @@
 <br>
 
 #### 홈 화면
-<img src="https://github.com/user-attachments/assets/7c3f155e-aa4b-47f1-985a-7640660b9a63" width=200>
-<img src="https://github.com/user-attachments/assets/4939c833-363e-4e4b-97af-3433829579cd" width=200>
 <img src="https://github.com/user-attachments/assets/38f7a394-2ede-443f-99e6-2c33d4d6bec0" width=200>
+<img src="https://github.com/user-attachments/assets/4939c833-363e-4e4b-97af-3433829579cd" width=200>
+<img src="https://github.com/user-attachments/assets/7c3f155e-aa4b-47f1-985a-7640660b9a63" width=200>
 
 - 목적지를 검색하고 약속 시간을 설정해요.
 - 약속 시간은 최대 24시간 후 까지만 설정 가능해요.
