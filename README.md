@@ -29,11 +29,13 @@
 - 로그인 화면
 <img src="https://github.com/user-attachments/assets/7a292280-bc91-448b-b9d6-71a55b4ea03b" width=200>
 <img src="https://github.com/user-attachments/assets/05f9f4bd-9952-4ea8-aa4d-23ea116fc01d" width=200>
+
   - 휴대폰 번호 11자리, 비밀번호 4자리 이상일 경우 로그인 버튼을 활성화 해요.
  
 - 회원가입 화면
 <img src="https://github.com/user-attachments/assets/9976833a-935c-4b12-9504-efdef4e4e362" width=200>
 <img src="https://github.com/user-attachments/assets/3cebf48a-6983-4c0e-8bc2-acde8944fea6" width=200>
+
   - 휴대폰 번호 11자리, 비밀번호 4자리 이상, 비밀번호 확인, 약관 동의 여부를 확인 후 회원가입 버튼을 활성화 해요.
 
 - 홈 화면
