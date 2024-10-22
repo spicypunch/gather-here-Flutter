@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
@@ -32,8 +31,7 @@ class ShareScreen extends ConsumerStatefulWidget {
   ConsumerState<ShareScreen> createState() => _ShareScreenState();
 }
 
-class _ShareScreenState extends ConsumerState<ShareScreen>
-    with WidgetsBindingObserver {
+class _ShareScreenState extends ConsumerState<ShareScreen> with WidgetsBindingObserver {
   late final Timer _timer;
   final GlobalKey<_MapState> _mapKey = GlobalKey<_MapState>();
 
@@ -41,7 +39,7 @@ class _ShareScreenState extends ConsumerState<ShareScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       ref.read(shareProvider.notifier).timeTick();
     });
   }
@@ -58,8 +56,7 @@ class _ShareScreenState extends ConsumerState<ShareScreen>
     if (!mounted) return;
     final service = FlutterBackgroundService();
     final isRunning = await service.isRunning();
-    if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
       if (!isRunning) {
         ref.read(shareProvider.notifier).disconnectOnlySocket();
         startBackgroundService();
@@ -79,12 +76,8 @@ class _ShareScreenState extends ConsumerState<ShareScreen>
       child: Scaffold(
         body: Stack(
           children: [
-            _Map(
-                isHost: widget.isHost,
-                roomModel: widget.roomModel,
-                key: _mapKey),
-            _BottomSheet(
-                floatingAction: _mapKey.currentState?._moveToTargetPosition),
+            _Map(isHost: widget.isHost, roomModel: widget.roomModel, key: _mapKey),
+            _BottomSheet(floatingAction: _mapKey.currentState?._moveToTargetPosition),
             _backButton(),
             _timerHeader(),
           ],
@@ -121,15 +114,9 @@ class _ShareScreenState extends ConsumerState<ShareScreen>
             ),
             icon: Container(
               height: 50,
-              padding: EdgeInsets.all(10.0),
-              child: Icon(
-                Icons.exit_to_app,
-                size: 30,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
+              padding: const EdgeInsets.all(10.0),
+              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+              child: const Icon(Icons.exit_to_app, size: 30),
             ),
           ),
         ),
@@ -160,10 +147,8 @@ class _ShareScreenState extends ConsumerState<ShareScreen>
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w500,
-                    fontFeatures: [FontFeature.tabularFigures()],
-                    color: state.remainSeconds <= 60
-                        ? AppColor.red
-                        : AppColor.black1,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                    color: state.remainSeconds <= 60 ? AppColor.red : AppColor.black1,
                   ),
                 ),
               ],
@@ -190,8 +175,7 @@ class _Map extends ConsumerStatefulWidget {
 }
 
 class _MapState extends ConsumerState<_Map> {
-  final Completer<GoogleMapController> _controller =
-      Completer<GoogleMapController>();
+  final Completer<GoogleMapController> _controller = Completer<GoogleMapController>();
 
   static const CameraPosition _defaultPosition = CameraPosition(
     target: LatLng(37.5642135, 127.0016985),
@@ -211,9 +195,7 @@ class _MapState extends ConsumerState<_Map> {
   }
 
   void _setup() async {
-    await ref
-        .read(shareProvider.notifier)
-        .setInitState(widget.isHost, widget.roomModel);
+    await ref.read(shareProvider.notifier).setInitState(widget.isHost, widget.roomModel);
     final isHost = ref.read(shareProvider).isHost == 'true';
     await ref.read(shareProvider.notifier).connectSocket(type: isHost ? 0 : 1);
     ref.read(shareProvider.notifier).observeMyLocation((lat, lon) {
@@ -232,8 +214,6 @@ class _MapState extends ConsumerState<_Map> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(shareProvider);
-
     return Stack(
       children: [
         _googleMap(),
@@ -256,8 +236,7 @@ class _MapState extends ConsumerState<_Map> {
       markers: state.markers.whereType<Marker>().toSet().union({
         Marker(
           markerId: MarkerId('${state.roomModel?.destinationName}'),
-          position: LatLng(state.roomModel?.destinationLat ?? 0,
-              state.roomModel?.destinationLng ?? 0),
+          position: LatLng(state.roomModel?.destinationLat ?? 0, state.roomModel?.destinationLng ?? 0),
           infoWindow: InfoWindow(title: '${state.roomModel?.destinationName}'),
         )
       }),
@@ -265,8 +244,6 @@ class _MapState extends ConsumerState<_Map> {
   }
 
   Widget _refreshButton() {
-    final state = ref.watch(shareProvider);
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: SafeArea(
@@ -301,10 +278,9 @@ class _MapState extends ConsumerState<_Map> {
 }
 
 class _BottomSheet extends ConsumerStatefulWidget {
-  final void Function({required double lat, required double lon})?
-      floatingAction;
+  final void Function({required double lat, required double lon})? floatingAction;
 
-  const _BottomSheet({required this.floatingAction, super.key});
+  const _BottomSheet({required this.floatingAction});
 
   @override
   ConsumerState<_BottomSheet> createState() => _BottomSheetState();
@@ -320,16 +296,13 @@ class _BottomSheetState extends ConsumerState<_BottomSheet> {
     _scrollableController = DraggableScrollableController();
     _scrollableController.addListener(() {
       setState(() {
-        _currentSheetHeight =
-            _scrollableController.size * MediaQuery.of(context).size.height;
+        _currentSheetHeight = _scrollableController.size * MediaQuery.of(context).size.height;
       });
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(shareProvider);
-
     return Stack(
       children: [
         _memberListSheet(),
@@ -361,10 +334,11 @@ class _BottomSheetState extends ConsumerState<_BottomSheet> {
             controller: scrollController,
             slivers: [
               SliverToBoxAdapter(child: _destinationHeader()),
-              SliverList.list(
-                children: state.members
-                    .map((member) => _MemberRow(member: member))
-                    .toList(),
+              SliverList.builder(
+                itemCount: state.members.length,
+                itemBuilder: (context, index) {
+                  return _MemberRow(index: index, member: state.members[index]);
+                },
               )
             ],
           ),
@@ -382,9 +356,7 @@ class _BottomSheetState extends ConsumerState<_BottomSheet> {
       right: 10,
       child: FloatingActionButton.small(
         onPressed: () {
-          Utils.showSnackBar(
-              context, '내 위치 추적모드 ${state.isTracking ? 'off' : 'on'}',
-              durationSeconds: 1);
+          Utils.showSnackBar(context, '내 위치 추적모드 ${state.isTracking ? 'off' : 'on'}', durationSeconds: 1);
           ref.read(shareProvider.notifier).toggleTrackingButton();
           if (state.myLat != null && state.myLong != null) {
             widget.floatingAction?.call(lat: state.myLat!, lon: state.myLong!);
@@ -409,10 +381,8 @@ class _BottomSheetState extends ConsumerState<_BottomSheet> {
           Row(
             children: [
               Text(
-                Utils.makeMeetingHeaderLabel(
-                    DateTime.parse(state.roomModel!.encounterDate!)),
-                style: const TextStyle(
-                    fontWeight: FontWeight.w500, fontSize: 20, height: 1),
+                Utils.makeMeetingHeaderLabel(DateTime.parse(state.roomModel!.encounterDate!)),
+                style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 20, height: 1),
                 maxLines: 2,
               ),
               const Spacer(),
@@ -422,8 +392,7 @@ class _BottomSheetState extends ConsumerState<_BottomSheet> {
         const SizedBox(height: 5),
         Text(
           '${state.roomModel?.destinationName}',
-          style:
-              const TextStyle(fontWeight: FontWeight.w700, fontSize: 24, height: 1),
+          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 24, height: 1),
         ),
       ],
     );
@@ -444,7 +413,7 @@ class _BottomSheetState extends ConsumerState<_BottomSheet> {
       ),
       iconAlignment: IconAlignment.end,
       label: Text('${state.roomModel?.shareCode}'),
-      icon: Icon(Icons.content_copy),
+      icon: const Icon(Icons.content_copy),
       onPressed: () {
         if (state.roomModel?.shareCode != null) {
           Clipboard.setData(ClipboardData(text: state.roomModel!.shareCode!));
@@ -455,15 +424,29 @@ class _BottomSheetState extends ConsumerState<_BottomSheet> {
 }
 
 class _MemberRow extends StatelessWidget {
+  final int index;
   final SocketMemberListModel member;
 
   const _MemberRow({
+    required this.index,
     required this.member,
-    super.key,
   });
 
   @override
   Widget build(BuildContext context) {
+    final Color crownColor;
+
+    switch (index) {
+      case 0:
+        crownColor = AppColor.gold;
+      case 1:
+        crownColor = AppColor.sliver;
+      case 2:
+        crownColor = AppColor.bronze;
+      default:
+        crownColor = AppColor.white;
+    }
+
     return Padding(
       padding: const EdgeInsets.only(top: 10, bottom: 10),
       child: Row(
@@ -477,11 +460,9 @@ class _MemberRow extends StatelessWidget {
                   height: 60,
                   fit: BoxFit.cover,
                   // 로딩 중일 때 표시
-                  placeholder: (context, url) =>
-                      const CircularProgressIndicator(),
+                  placeholder: (context, url) => const CircularProgressIndicator(),
                   // 에러 발생 시 표시
-                  errorWidget: (context, url, error) =>
-                      const Icon(Icons.account_circle),
+                  errorWidget: (context, url, error) => const Icon(Icons.account_circle),
                 ),
               ),
             ),
@@ -496,15 +477,11 @@ class _MemberRow extends StatelessWidget {
             children: [
               Text(
                 member.nickname,
-                style:
-                    const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
               ),
               Text(
-                '${member.destinationDistance}m 남음',
-                style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                    color: AppColor.grey1),
+                '${Utils.addDistanceUnit(member.destinationDistance)} 남음',
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: AppColor.grey1),
               ),
             ],
           ),
@@ -514,8 +491,7 @@ class _MemberRow extends StatelessWidget {
               'asset/img/crown.png',
               width: 30,
               height: 30,
-              color: member.color,
-              colorBlendMode: BlendMode.modulate,
+              color: crownColor,
             )
         ],
       ),

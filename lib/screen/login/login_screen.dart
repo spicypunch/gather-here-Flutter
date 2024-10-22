@@ -31,13 +31,13 @@ class LoginScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     const SizedBox(height: 30),
-                    _TitleHeader(),
+                    const _TitleHeader(),
                     const Spacer(),
                     _TextFields(),
                     const SizedBox(height: 40),
-                    _LoginButton(),
+                    const _LoginButton(),
                     const SizedBox(height: 40),
-                    _BottomContainer(),
+                    const _BottomContainer(),
                     const SizedBox(height: 10),
                   ],
                 ),
@@ -51,7 +51,7 @@ class LoginScreen extends StatelessWidget {
 }
 
 class _TitleHeader extends StatelessWidget {
-  const _TitleHeader({super.key});
+  const _TitleHeader();
 
   @override
   Widget build(BuildContext context) {
@@ -79,8 +79,6 @@ class _TextFields extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final vm = ref.watch(loginProvider);
-
     return Column(
       children: [
         DefaultTextFormField(
@@ -106,7 +104,7 @@ class _TextFields extends ConsumerWidget {
 }
 
 class _LoginButton extends ConsumerWidget {
-  const _LoginButton({super.key});
+  const _LoginButton();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -130,7 +128,7 @@ class _LoginButton extends ConsumerWidget {
 
 
 class _BottomContainer extends StatelessWidget {
-  const _BottomContainer({super.key});
+  const _BottomContainer();
 
   @override
   Widget build(BuildContext context) {
