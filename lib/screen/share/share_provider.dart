@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:gather_here/screen/share/Image_marker.dart';
+import 'package:gather_here/screen/share/image_marker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 
@@ -120,7 +120,6 @@ class ShareProvider extends StateNotifier<ShareState> {
 
     socketManager.observeConnection().listen(
       (position) async {
-        print('callback: $position');
         Map<String, dynamic> resultMap = jsonDecode(position);
         final results = SocketResponseModel.fromJson(resultMap);
 
@@ -145,7 +144,7 @@ class ShareProvider extends StateNotifier<ShareState> {
         state.markers = markers;
 
         for (int i = 0; i < state.members.length; i++) {
-          state.members[i].rank = i + 1;
+          state.members[i].rank = i+1;
         }
 
         _setState();
@@ -208,7 +207,6 @@ class ShareProvider extends StateNotifier<ShareState> {
     _positionStream = locationManager.observePosition().listen(
       (position) {
         if (position != null) {
-          print('my position ${position}');
           setPosition(position.latitude, position.longitude);
           deliveryMyInfo(2);
           callback(position.latitude, position.longitude);

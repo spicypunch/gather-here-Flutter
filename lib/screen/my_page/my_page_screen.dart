@@ -8,6 +8,7 @@ import 'package:gather_here/common/components/default_layout.dart';
 import 'package:gather_here/common/components/default_text_field_dialog.dart';
 import 'package:gather_here/common/provider/member_info_provider.dart';
 import 'package:gather_here/common/utils/utils.dart';
+import 'package:gather_here/screen/developer/developer_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -36,12 +37,12 @@ class MyPageScreen extends ConsumerWidget {
       child: SafeArea(
         child: Stack(
           children: [
-            Padding(
+            const Padding(
               padding: EdgeInsets.all(16.0),
               child: Column(
                 children: [
                   _ProfileHeader(),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   _SettingList(),
                 ],
               ),
@@ -65,7 +66,7 @@ class MyPageScreen extends ConsumerWidget {
 }
 
 class _ProfileHeader extends ConsumerWidget {
-  const _ProfileHeader({super.key});
+  const _ProfileHeader();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -145,7 +146,7 @@ class _ProfileHeader extends ConsumerWidget {
               builder: (BuildContext context) {
                 return DefaultTextFieldDialog(
                   title: '어떤 닉네임으로 변경할까요?',
-                  labels: ['2~20자 이내로 입력해주세요'],
+                  labels: const ['2~20자 이내로 입력해주세요'],
                   onChanged: (nickName) async {
                     await ref
                         .read(memberInfoProvider.notifier)
@@ -156,7 +157,7 @@ class _ProfileHeader extends ConsumerWidget {
               },
             );
           },
-          icon: Icon(Icons.edit, size: 18),
+          icon: const Icon(Icons.edit, size: 18),
         ),
       ],
     );
@@ -176,19 +177,19 @@ class _ProfileHeader extends ConsumerWidget {
 }
 
 class _SettingList extends ConsumerWidget {
-  const _SettingList({super.key});
+  const _SettingList();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final storageState = ref.watch(storageKeyProvider);
 
     return Container(
-      padding: EdgeInsets.all(8),
-      decoration: BoxDecoration(
+      padding: const EdgeInsets.all(8),
+      decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.all(Radius.circular(8))),
       child: ListView(
-        physics: NeverScrollableScrollPhysics(),
+        physics: const NeverScrollableScrollPhysics(),
         shrinkWrap: true,
         children: [
           _settingRow(
@@ -206,19 +207,13 @@ class _SettingList extends ConsumerWidget {
               icon: Icons.cancel,
               onTap: () => _withDrawl(context, ref)),
           const SizedBox(height: 16),
-          _settingRow(
-              title: '서비스 이용약관',
-              icon: Icons.description,
-              indicator: true,
-              onTap: () {
-                launchUrlString('https://www.naver.com');
-              }),
+          _settingRow(title: '서비스 이용약관', icon: Icons.description, indicator: true, onTap: () {
+            launchUrlString('https://placid-sneeze-769.notion.site/11f29e9854d48036a272c3cbb59d9e62');
+          }),
           const SizedBox(height: 16),
-          _settingRow(
-              title: '개발자 정보',
-              icon: Icons.developer_board,
-              indicator: true,
-              onTap: () {}),
+          _settingRow(title: '개발자 정보', icon: Icons.developer_board, indicator: true, onTap: () {
+            context.pushNamed(DeveloperScreen.name);
+          }),
           const SizedBox(height: 16),
           _settingRow(
               title: '버전정보',
