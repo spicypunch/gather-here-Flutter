@@ -48,8 +48,8 @@ Future<void> initializeService() async {
       autoStart: false,
       isForegroundMode: true,
       notificationChannelId: notificationChannelId,
-      initialNotificationTitle: 'AWESOME SERVICE',
-      initialNotificationContent: 'Initializing',
+      initialNotificationTitle: '',
+      initialNotificationContent: '',
       foregroundServiceNotificationId: notificationId,
     ),
     iosConfiguration: IosConfiguration(
@@ -124,8 +124,7 @@ void onStart(ServiceInstance service) async {
             android: AndroidNotificationDetails(
               notificationChannelId,
               'MY FOREGROUND SERVICE',
-              // TODO: 아이콘 추후 수정
-              icon: 'ic_bg_service_small',
+              icon: 'app_icon',
               ongoing: true,
             ),
           ),
